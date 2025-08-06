@@ -150,6 +150,26 @@ curl -X 'POST' \
 
 ---
 
+## Acknowledgements and Citations
+
+This project is built upon the foundational concepts and research from several key sources. We extend our sincere gratitude to the authors and contributors for their valuable contributions that made this platform possible.
+
+*   **CocoIndex:** The principles for flexible and incremental data ingestion pipelines are inspired by [CocoIndex](https://cocoindex.io/).
+
+*   **RepoHyper:** The code intelligence and Code Property Graph functionalities are based on the research in the following paper:
+    ```bibtex
+    @article{phan2024repohyper,
+      title={Repohyper: Better context retrieval is all you need for repository-level code completion},
+      author={Phan, Huy N and Phan, Hoang N and Nguyen, Tien N and Bui, Nghi DQ},
+      journal={arXiv preprint arXiv:2403.06095},
+      year={2024}
+    }
+    ```
+
+*   **ConPort:** The project memory and structured knowledge management concepts are influenced by the work of [GreatScottyMac](https://github.com/GreatScottyMac).
+
+---
+
 ## Contributing
 
 Contributions are welcome! If you have ideas for new features, improvements, or have found a bug, please open an issue or submit a pull request.
