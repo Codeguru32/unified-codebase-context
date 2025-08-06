@@ -1,20 +1,13 @@
-# Byte-compiled / optimized / DLL files
+# Python artifacts
 __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-*.so
+# Virtual Environments
+.env
+.venv
+env/
+venv/
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-
-# Log files
-*.log
-
-# IDE / Editor specific
-.vscode/
-.idea/
+# Downloaded models - do not commit large model files
+/models/

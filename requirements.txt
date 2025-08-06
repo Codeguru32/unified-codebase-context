@@ -1,7 +1,3 @@
-fastapi
-uvicorn[standard]
-pydantic
-sentence-transformers
 torch
-networkx
-numpy
+requests
+tqdm
