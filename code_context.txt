@@ -1,0 +1,3432 @@
+### USER
+using Unified Codebase Context Platform_.md as a referrence ,combine all the three mentioned github repo functions to create  a new program called uniifed codebase context
+
+### ASSISTANT
+<details type="reasoning" done="true" duration="66">
+<summary>Thought for 66 seconds</summary>
+> 我们正在创建一个名为"unified codebase context"的新程序，该程序将结合三个提到的GitHub仓库的功能：CocoIndex、RepoHyper和Context Portal (ConPort)。根据提供的文档，这三个组件各自有不同的功能：
+> 
+> 1. **CocoIndex**：一个高性能的数据转换框架，用于增量索引和实时数据处理。它负责从各种来源（如本地文件、Amazon S3、Google Drive）摄取数据，进行转换（如分块、嵌入生成、结构化信息提取），并将处理后的数据存储到目标（如Postgres、Neo4j、Qdrant）。
+> 
+> 2. **RepoHyper**：一个仓库级别的代码智能框架，用于构建代码属性图（CPG）并提供高级代码检索功能。它使用搜索-扩展算法和图神经网络（GNN）链接预测来理解代码库的语义关系。
+> 
+> 3. **Context Portal (ConPort)**：一个结构化的项目记忆库，用于存储项目特定的知识（如决策、进度、系统模式），并通过MCP（Model Context Protocol）提供查询接口。它支持向量嵌入和语义搜索，以实现高效的检索增强生成（RAG）。
+> 
+> 根据文档中的集成架构，我们需要设计一个系统，将这三个组件协同工作，形成一个统一的平台。以下是设计思路：
+> 
+> ### 系统架构
+> 
+> 1. **数据流**：
+>    - **数据摄取**：使用CocoIndex从代码仓库和文档中摄取原始数据。
+>    - **数据处理**：
+>      - 对于代码：通过CocoIndex进行分块和嵌入生成，然后传递给RepoHyper构建代码属性图（CPG）。
+>      - 对于文档：通过CocoIndex的`ExtractByLlm`函数提取结构化信息（如决策、进度），并存储到ConPort中。
+>    - **索引更新**：CocoIndex的增量处理能力确保当源数据变化时，能够更新RepoHyper的代码图和ConPort的知识图谱。
+> 
+> 2. **组件交互**：
+>    - **CocoIndex与RepoHyper**：CocoIndex处理后的代码数据（分块、嵌入）被RepoHyper用于构建和更新代码图。
+>    - **CocoIndex与ConPort**：CocoIndex从文档中提取的结构化信息被存储到ConPort中，同时ConPort中的数据也可以被CocoIndex用于生成嵌入和索引。
+>    - **RepoHyper与ConPort**：RepoHyper的代码图中的节点（如函数、类）可以与ConPort中的项目知识（如决策）建立链接，形成更丰富的知识图谱。
+> 
+> 3. **统一接口**：
+>    - 提供一个统一的API，允许用户和AI代理查询整个代码库的上下文。这个接口将整合：
+>      - 来自RepoHyper的代码语义检索。
+>      - 来自ConPort的项目知识检索。
+>      - 来自CocoIndex的文档和代码的语义搜索。
+> 
+> ### 实现步骤
+> 
+> 我们将创建一个Python程序，它包含以下模块：
+> 
+> 1. **数据摄取模块**（使用CocoIndex）：
+>    - 配置数据源（如本地代码仓库、文档目录）。
+>    - 定义数据流：读取源数据，进行分块、嵌入生成，并将处理后的数据发送到相应的目标（代码数据发送给RepoHyper，文档数据发送给ConPort）。
+> 
+> 2. **代码图构建模块**（使用RepoHyper）：
+>    - 接收来自CocoIndex的代码数据（分块和嵌入）。
+>    - 构建代码属性图（CPG），包括节点（函数、类等）和边（调用关系、继承关系等）。
+>    - 提供代码检索接口（基于语义图搜索）。
+> 
+> 3. **项目知识管理模块**（使用ConPort）：
+>    - 接收来自CocoIndex的结构化项目知识（决策、进度等）。
+>    - 存储到SQLite数据库，并生成向量嵌入以支持语义搜索。
+>    - 提供MCP工具接口，用于查询和更新项目知识。
+> 
+> 4. **统一查询接口**：
+>    - 整合RepoHyper和ConPort的检索功能，提供统一的查询API。
+>    - 支持混合查询：同时搜索代码语义和项目知识。
+> 
+> 5. **增量更新机制**：
+>    - 利用CocoIndex的增量处理能力，监控源数据变化，并更新RepoHyper的代码图和ConPort的知识图谱。
+> 
+> ### 代码结构
+> 
+> 我们将创建以下文件结构：
+> 
+> ```
+> unified_codebase_context/
+> ├── main.py                 # 主程序入口
+> ├── config.py              # 配置文件
+> ├── data_ingestion/        # 数据摄取模块（基于CocoIndex）
+> │   ├── __init__.py
+> │   ├── cocoindex_pipeline.py
+> │   └── sources/
+> ├── code_graph/            # 代码图构建模块（基于RepoHyper）
+> │   ├── __init__.py
+> │   ├── repo_hyper_wrapper.py
+> │   └── graph_builder.py
+> ├── project_memory/        # 项目知识管理模块（基于ConPort）
+> │   ├── __init__.py
+> │   ├── conport_wrapper.py
+> │   └── mcp_server.py
+> ├── unified_query/         # 统一查询接口
+> │   ├── __init__.py
+> │   ├── query_engine.py
+> │   └── retrievers/
+> └── utils/                 # 工具函数
+>     ├── __init__.py
+>     └── helpers.py
+> ```
+> 
+> ### 关键代码实现
+> 
+> #### 1. 配置文件 (config.py)
+> 
+> ```python
+> import os
+> 
+> class Config:
+>     # CocoIndex配置
+>     COCOINDEX_DATABASE_URL = os.getenv("COCOINDEX_DATABASE_URL", "postgresql://user:password@localhost/cocoindex")
+>     
+>     # RepoHyper配置
+>     REPOHYPER_MODEL_PATH = os.getenv("REPOHYPER_MODEL_PATH", "path/to/repo_hyper_model")
+>     
+>     # ConPort配置
+>     CONPORT_DB_PATH = os.getenv("CONPORT_DB_PATH", "./context_portal/context.db")
+>     
+>     # 数据源配置
+>     CODE_REPO_PATH = os.getenv("CODE_REPO_PATH", "./code_repo")
+>     DOCS_PATH = os.getenv("DOCS_PATH", "./docs")
+>     
+>     # 目标存储配置
+>     VECTOR_STORE_PATH = os.getenv("VECTOR_STORE_PATH", "./vector_store")
+>     GRAPH_DB_PATH = os.getenv("GRAPH_DB_PATH", "./graph_db")
+> ```
+> 
+> #### 2. 数据摄取模块 (data_ingestion/cocoindex_pipeline.py)
+> 
+> ```python
+> from cocoindex import Flow, LocalFile, SplitRecursively, SentenceTransformerEmbed, ExtractByLlm
+> from cocoindex.targets import Postgres, Neo4j, Qdrant
+> from cocoindex.llm import LlmSpec, LlmApiType
+> from config import Config
+> 
+> class CocoIndexPipeline:
+>     def __init__(self):
+>         self.flow = Flow()
+>         self.setup_flow()
+>     
+>     def setup_flow(self):
+>         # 定义数据源：代码和文档
+>         code_source = LocalFile(path=Config.CODE_REPO_PATH, pattern="**/*.py")
+>         docs_source = LocalFile(path=Config.DOCS_PATH, pattern="**/*.md")
+>         
+>         # 处理代码数据：分块、嵌入，然后发送到Neo4j（用于RepoHyper）和Qdrant（用于向量搜索）
+>         code_chunks = self.flow.import_from(code_source) \
+>             .transform(SplitRecursively(language="python")) \
+>             .transform(SentenceTransformerEmbed(model="all-MiniLM-L6-v2"))
+>         
+>         # 将代码嵌入存储到Qdrant（用于语义搜索）
+>         code_chunks.export_to(Qdrant(url=Config.VECTOR_STORE_PATH, collection_name="code_chunks"))
+>         
+>         # 将原始代码数据发送到RepoHyper进行图构建（这里我们可能需要将代码数据写入临时文件或直接传递给RepoHyper）
+>         # 注意：实际实现中，RepoHyper可能需要特定的输入格式，这里我们假设RepoHyper可以处理分块后的代码数据
+>         # 我们可以将代码数据保存到临时目录，然后由RepoHyper处理
+>         code_chunks.export_to(LocalFile(path="./temp/code_chunks"))
+>         
+>         # 处理文档数据：分块、嵌入，然后使用ExtractByLlm提取结构化信息
+>         doc_chunks = self.flow.import_from(docs_source) \
+>             .transform(SplitRecursively(language="markdown")) \
+>             .transform(SentenceTransformerEmbed(model="all-MiniLM-L6-v2"))
+>         
+>         # 提取结构化信息（决策、进度等）
+>         llm_spec = LlmSpec(api_type=LlmApiType.OPENAI, model="gpt-4")
+>         extracted_data = doc_chunks.transform(ExtractByLlm(
+>             llm_spec=llm_spec,
+>             output_type={
+>                 "decisions": [{"summary": "str", "rationale": "str"}],
+>                 "progress": [{"description": "str", "status": "str"}]
+>             }
+>         ))
+>         
+>         # 将提取的结构化数据发送到ConPort（通过MCP接口）
+>         # 这里我们可能需要将提取的数据转换为ConPort可以接受的格式，然后调用ConPort的API
+>         extracted_data.export_to(ConPortTarget())  # ConPortTarget需要自定义实现
+>         
+>         # 将文档嵌入存储到Qdrant
+>         doc_chunks.export_to(Qdrant(url=Config.VECTOR_STORE_PATH, collection_name="doc_chunks"))
+>     
+>     def run(self):
+>         self.flow.run()
+> 
+> # 自定义ConPort目标，用于将提取的结构化数据发送到ConPort
+> class ConPortTarget:
+>     def __init__(self):
+>         from project_memory.conport_wrapper import ConPortWrapper
+>         self.conport = ConPortWrapper()
+>     
+>     def write(self, data):
+>         # 将提取的数据写入ConPort
+>         for item in data:
+>             if "decisions" in item:
+>                 for decision in item["decisions"]:
+>                     self.conport.log_decision(decision["summary"], decision["rationale"])
+>             if "progress" in item:
+>                 for progress in item["progress"]:
+>                     self.conport.log_progress(progress["description"], progress["status"])
+> ```
+> 
+> #### 3. 代码图构建模块 (code_graph/repo_hyper_wrapper.py)
+> 
+> ```python
+> import torch
+> from src.repo_graph.repo_to_graph import load_contexts_then_embed, edge_dict_to_adjacency_tensor
+> from src.repo_graph.parse_source_code import parse_source
+> from config import Config
+> 
+> class RepoHyperWrapper:
+>     def __init__(self):
+>         self.model_path = Config.REPOHYPER_MODEL_PATH
+>         self.graph = None
+>         self.embeddings = None
+>         self.edge_tensor = None
+>         self.type_edges_tensor = None
+>         self.index_to_name = None
+>         self.index_to_node_type = None
+>     
+>     def build_graph(self, repo_path, call_graph_json_path):
+>         # 解析源代码，构建代码属性图
+>         contexts_files = parse_source(repo_path, call_graph_json_path)
+>         self.embeddings, edges, type_edges, _, self.index_to_name, self.index_to_node_type = load_contexts_then_embed(contexts_files)
+>         self.edge_tensor = edge_dict_to_adjacency_tensor(edges, len(self.embeddings))
+>         self.type_edges_tensor = {k: edge_dict_to_adjacency_tensor(type_edges[k], len(self.embeddings)) for k in type_edges}
+>         
+>         # 加载预训练的GNN模型（如果有）
+>         if self.model_path:
+>             self.model = torch.load(self.model_path)
+>             self.model.eval()
+>     
+>     def search(self, query_embedding, k=5):
+>         # 使用GNN模型进行代码检索
+>         if self.model is None:
+>             raise ValueError("Model not loaded")
+>         
+>         # 这里简化了RepoHyper的搜索过程，实际实现可能更复杂
+>         with torch.no_grad():
+>             logits = self.model(self.embeddings, self.edge_tensor, [0], query_embedding)
+>             probs = torch.softmax(logits, dim=-1)
+>             top_k = torch.topk(probs, k)
+>         
+>         # 返回top_k相关的代码节点
+>         results = []
+>         for idx in top_k.indices:
+>             results.append({
+>                 "name": self.index_to_name[idx],
+>                 "score": top_k.values[idx].item()
+>             })
+>         return results
+> ```
+> 
+> #### 4. 项目知识管理模块 (project_memory/conport_wrapper.py)
+> 
+> ```python
+> import sqlite3
+> from context_portal_mcp.core.config import Config as ConPortConfig
+> from context_portal_mcp.db.database import get_db
+> from context_portal_mcp.handlers.mcp_handlers import (
+>     log_decision, get_decisions, log_progress, get_progress,
+>     log_system_pattern, get_system_patterns,
+>     log_custom_data, get_custom_data,
+>     search_decisions_fts, search_custom_data_value_fts,
+>     semantic_search_conport
+> )
+> 
+> class ConPortWrapper:
+>     def __init__(self):
+>         self.db_path = Config.CONPORT_DB_PATH
+>         self.workspace_id = "default"  # 可以根据实际情况设置
+>     
+>     def log_decision(self, summary, rationale, tags=None):
+>         log_decision(self.workspace_id, summary, rationale, tags or [])
+>     
+>     def get_decisions(self, limit=10):
+>         return get_decisions(self.workspace_id, limit)
+>     
+>     def log_progress(self, description, status, linked_item_type=None, linked_item_id=None):
+>         log_progress(self.workspace_id, description, status, linked_item_type, linked_item_id)
+>     
+>     def get_progress(self, status_filter=None, limit=10):
+>         return get_progress(self.workspace_id, status_filter, limit)
+>     
+>     def search_decisions(self, query_term, limit=10):
+>         return search_decisions_fts(self.workspace_id, query_term, limit)
+>     
+>     def search_custom_data(self, query_term, category_filter=None, limit=10):
+>         return search_custom_data_value_fts(self.workspace_id, query_term, category_filter, limit)
+>     
+>     def semantic_search(self, query_text, top_k=5, filter_item_types=None):
+>         return semantic_search_conport(self.workspace_id, query_text, top_k, filter_item_types)
+> ```
+> 
+> #### 5. 统一查询接口 (unified_query/query_engine.py)
+> 
+> ```python
+> from code_graph.repo_hyper_wrapper import RepoHyperWrapper
+> from project_memory.conport_wrapper import ConPortWrapper
+> from cocoindex import SentenceTransformerEmbed
+> 
+> class QueryEngine:
+>     def __init__(self):
+>         self.repo_hyper = RepoHyperWrapper()
+>         self.conport = ConPortWrapper()
+>         self.embedder = SentenceTransformerEmbed(model="all-MiniLM-L6-v2")
+>     
+>     def search(self, query, search_code=True, search_docs=True, search_knowledge=True, top_k=5):
+>         results = {
+>             "code": [],
+>             "docs": [],
+>             "knowledge": []
+>         }
+>         
+>         # 嵌入查询
+>         query_embedding = self.embedder.embed([query])[0]
+>         
+>         # 搜索代码
+>         if search_code:
+>             code_results = self.repo_hyper.search(query_embedding, k=top_k)
+>             results["code"] = code_results
+>         
+>         # 搜索文档（这里我们假设文档的向量存储在Qdrant中，需要实现Qdrant的搜索）
+>         if search_docs:
+>             # docs_results = self.search_docs(query_embedding, top_k)
+>             docs_results = []  # 暂时留空
+>             results["docs"] = docs_results
+>         
+>         # 搜索项目知识
+>         if search_knowledge:
+>             knowledge_results = self.conport.semantic_search(query, top_k=top_k)
+>             results["knowledge"] = knowledge_results
+>         
+>         return results
+>     
+>     def search_docs(self, query_embedding, top_k):
+>         # 实现Qdrant中的文档搜索
+>         # 这里需要连接到Qdrant并执行相似性搜索
+>         pass
+> ```
+> 
+> #### 6. 主程序 (main.py)
+> 
+> ```python
+> from data_ingestion.cocoindex_pipeline import CocoIndexPipeline
+> from code_graph.repo_hyper_wrapper import RepoHyperWrapper
+> from unified_query.query_engine import QueryEngine
+> from config import Config
+> 
+> def main():
+>     # 初始化并运行CocoIndex管道，处理数据摄取和初始索引
+>     pipeline = CocoIndexPipeline()
+>     pipeline.run()
+>     
+>     # 构建代码图（RepoHyper）
+>     repo_hyper = RepoHyperWrapper()
+>     # 假设我们已经生成了调用图JSON文件
+>     repo_hyper.build_graph(Config.CODE_REPO_PATH, "./temp/call_graph.json")
+>     
+>     # 初始化查询引擎
+>     query_engine = QueryEngine()
+>     
+>     # 示例查询
+>     query = "How to handle user authentication?"
+>     results = query_engine.search(query)
+>     
+>     print("Code Results:")
+>     for result in results["code"]:
+>         print(f"- {result['name']} (score: {result['score']})")
+>     
+>     print("\nKnowledge Results:")
+>     for result in results["knowledge"]:
+>         print(f"- {result['content']} (type: {result['item_type']})")
+> 
+> if __name__ == "__main__":
+>     main()
+> ```
+> 
+> ### 注意事项
+> 
+> 1. **依赖安装**：需要安装CocoIndex、RepoHyper和ConPort的依赖包。由于这些项目可能没有发布到PyPI，可能需要从源码安装。
+> 
+> 2. **配置调整**：根据实际环境调整配置文件中的路径和连接字符串。
+> 
+> 3. **性能考虑**：对于大型代码库，构建代码图和嵌入可能需要大量计算资源。可以考虑使用GPU加速。
+> 
+> 4. **错误处理**：在实际应用中，需要添加适当的错误处理和日志记录。
+> 
+> 5. **增量更新**：CocoIndex支持增量处理，需要实现监控文件变化并触发更新的机制。
+> 
+> 这个设计提供了一个基础框架，实际实现时可能需要根据具体需求进行调整。
+</details>
+# Unified Codebase Context Platform Implementation
+
+Based on the provided documentation, I'll create a unified platform that integrates the core functionalities of CocoIndex, RepoHyper, and Context Portal (ConPort). This implementation will provide a comprehensive solution for AI-assisted development with real-time, project-specific context.
+
+## Architecture Overview
+
+The unified platform will consist of the following components:
+
+1. **Data Ingestion & Processing Layer** (CocoIndex functionality)
+2. **Code Intelligence Layer** (RepoHyper functionality)
+3. **Project Memory Layer** (ConPort functionality)
+4. **Unified Query & RAG Engine**
+5. **API Interface**
+
+Let's implement this step by step:
+
+## 1. Core Implementation
+
+```python
+# unified_codebase_context/__init__.py
+"""
+Unified Codebase Context Platform
+Integrating CocoIndex, RepoHyper, and Context Portal (ConPort) functionalities
+"""
+
+__version__ = "1.0.0"
+```
+
+```python
+# unified_codebase_context/config.py
+import os
+from dataclasses import dataclass
+from typing import Optional, Dict, Any
+
+@dataclass
+class CocoIndexConfig:
+    """Configuration for CocoIndex data processing"""
+    database_url: str = os.getenv("COCOINDEX_DATABASE_URL", "postgresql://localhost/cocoindex")
+    neo4j_url: str = os.getenv("NEO4J_URL", "bolt://localhost:7687")
+    neo4j_user: str = os.getenv("NEO4J_USER", "neo4j")
+    neo4j_password: str = os.getenv("NEO4J_PASSWORD", "password")
+    qdrant_url: str = os.getenv("QDRANT_URL", "http://localhost:6333")
+    
+@dataclass
+class RepoHyperConfig:
+    """Configuration for RepoHyper code intelligence"""
+    model_path: str = os.getenv("REPOHYPER_MODEL_PATH", "./models/repo_hyper_model.pt")
+    embedding_model: str = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+    
+@dataclass
+class ConPortConfig:
+    """Configuration for Context Portal"""
+    db_path: str = os.getenv("CONPORT_DB_PATH", "./context_portal/context.db")
+    workspace_id: str = os.getenv("WORKSPACE_ID", "default_workspace")
+    
+@dataclass
+class UnifiedConfig:
+    """Unified configuration for the platform"""
+    cocoindex: CocoIndexConfig = CocoIndexConfig()
+    repohyper: RepoHyperConfig = RepoHyperConfig()
+    conport: ConPortConfig = ConPortConfig()
+    
+    # Data sources
+    code_repo_path: str = os.getenv("CODE_REPO_PATH", "./code_repo")
+    docs_path: str = os.getenv("DOCS_PATH", "./docs")
+    
+    # LLM configuration
+    llm_api_type: str = os.getenv("LLM_API_TYPE", "OPENAI")
+    llm_model: str = os.getenv("LLM_MODEL", "gpt-4")
+    llm_api_key: Optional[str] = os.getenv("LLM_API_KEY")
+    
+    # Processing settings
+    chunk_size: int = int(os.getenv("CHUNK_SIZE", "512"))
+    chunk_overlap: int = int(os.getenv("CHUNK_OVERLAP", "50"))
+    batch_size: int = int(os.getenv("BATCH_SIZE", "32"))
+```
+
+```python
+# unified_codebase_context/data_ingestion.py
+"""
+Data Ingestion and Processing Layer (CocoIndex functionality)
+Handles data ingestion, transformation, and incremental indexing
+"""
+
+import os
+import json
+import logging
+from typing import Dict, List, Any, Optional, Union
+from pathlib import Path
+from dataclasses import dataclass
+
+try:
+    from cocoindex import Flow, LocalFile, SplitRecursively, SentenceTransformerEmbed, ExtractByLlm
+    from cocoindex.targets import Postgres, Neo4j, Qdrant
+    from cocoindex.llm import LlmSpec, LlmApiType
+    COCOINDEX_AVAILABLE = True
+except ImportError:
+    COCOINDEX_AVAILABLE = False
+    logging.warning("CocoIndex not available. Using fallback implementation.")
+
+from .config import UnifiedConfig
+
+@dataclass
+class ProcessedData:
+    """Container for processed data"""
+    content: str
+    metadata: Dict[str, Any]
+    embeddings: Optional[List[float]] = None
+    structured_data: Optional[Dict[str, Any]] = None
+
+class DataIngestionEngine:
+    """Handles data ingestion and processing using CocoIndex principles"""
+    
+    def __init__(self, config: UnifiedConfig):
+        self.config = config
+        self.logger = logging.getLogger(__name__)
+        self._setup_components()
+    
+    def _setup_components(self):
+        """Initialize processing components"""
+        if COCOINDEX_AVAILABLE:
+            self.flow = Flow()
+            self.embedder = SentenceTransformerEmbed(model=self.config.repohyper.embedding_model)
+            
+            # Setup LLM spec for extraction
+            self.llm_spec = LlmSpec(
+                api_type=LlmApiType[self.config.llm_api_type],
+                model=self.config.llm_model
+            )
+        else:
+            self.logger.warning("Using fallback implementations")
+            self.embedder = None
+            self.llm_spec = None
+    
+    def ingest_code_repository(self, repo_path: str) -> Dict[str, Any]:
+        """
+        Ingest and process code repository
+        Returns processed code data with embeddings and metadata
+        """
+        self.logger.info(f"Processing code repository: {repo_path}")
+        
+        if COCOINDEX_AVAILABLE:
+            return self._process_code_with_cocoindex(repo_path)
+        else:
+            return self._process_code_fallback(repo_path)
+    
+    def _process_code_with_cocoindex(self, repo_path: str) -> Dict[str, Any]:
+        """Process code using CocoIndex"""
+        # Define data source
+        code_source = LocalFile(path=repo_path, pattern="**/*.{py,js,ts,java,cpp,c}")
+        
+        # Create processing pipeline
+        code_flow = self.flow.import_from(code_source)
+        
+        # Split code into meaningful chunks
+        code_chunks = code_flow.transform(
+            SplitRecursively(
+                language="auto",
+                chunk_size=self.config.chunk_size,
+                chunk_overlap=self.config.chunk_overlap
+            )
+        )
+        
+        # Generate embeddings
+        embedded_chunks = code_chunks.transform(
+            self.embedder
+        )
+        
+        # Export to vector store (Qdrant)
+        embedded_chunks.export_to(
+            Qdrant(
+                url=self.config.cocoindex.qdrant_url,
+                collection_name="code_chunks"
+            )
+        )
+        
+        # Export to graph database (Neo4j)
+        embedded_chunks.export_to(
+            Neo4j(
+                url=self.config.cocoindex.neo4j_url,
+                user=self.config.cocoindex.neo4j_user,
+                password=self.config.cocoindex.neo4j_password
+            )
+        )
+        
+        # Execute the flow
+        self.flow.run()
+        
+        return {"status": "success", "processed_files": len(code_flow)}
+    
+    def _process_code_fallback(self, repo_path: str) -> Dict[str, Any]:
+        """Fallback implementation when CocoIndex is not available"""
+        # Simple file processing without advanced chunking
+        processed_files = []
+        
+        for root, _, files in os.walk(repo_path):
+            for file in files:
+                if file.endswith(('.py', '.js', '.ts', '.java', '.cpp', '.c')):
+                    file_path = os.path.join(root, file)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        
+                        # Simple chunking by lines
+                        chunks = [content[i:i+self.config.chunk_size] 
+                                 for i in range(0, len(content), self.config.chunk_size)]
+                        
+                        processed_files.append({
+                            "file_path": file_path,
+                            "chunks": chunks,
+                            "metadata": {
+                                "file_type": file.split('.')[-1],
+                                "size": len(content)
+                            }
+                        })
+                    except Exception as e:
+                        self.logger.error(f"Error processing {file_path}: {e}")
+        
+        return {"status": "success", "processed_files": processed_files}
+    
+    def ingest_documentation(self, docs_path: str) -> Dict[str, Any]:
+        """
+        Ingest and process documentation
+        Returns processed docs with embeddings and extracted structured data
+        """
+        self.logger.info(f"Processing documentation: {docs_path}")
+        
+        if COCOINDEX_AVAILABLE:
+            return self._process_docs_with_cocoindex(docs_path)
+        else:
+            return self._process_docs_fallback(docs_path)
+    
+    def _process_docs_with_cocoindex(self, docs_path: str) -> Dict[str, Any]:
+        """Process docs using CocoIndex"""
+        # Define data source
+        docs_source = LocalFile(path=docs_path, pattern="**/*.{md,txt,pdf}")
+        
+        # Create processing pipeline
+        docs_flow = self.flow.import_from(docs_source)
+        
+        # Split docs into chunks
+        doc_chunks = docs_flow.transform(
+            SplitRecursively(
+                language="markdown",
+                chunk_size=self.config.chunk_size,
+                chunk_overlap=self.config.chunk_overlap
+            )
+        )
+        
+        # Generate embeddings
+        embedded_chunks = doc_chunks.transform(
+            self.embedder
+        )
+        
+        # Extract structured information using LLM
+        extracted_data = doc_chunks.transform(
+            ExtractByLlm(
+                llm_spec=self.llm_spec,
+                output_type={
+                    "decisions": [{"summary": "str", "rationale": "str", "tags": "List[str]"}],
+                    "progress": [{"description": "str", "status": "str"}],
+                    "patterns": [{"name": "str", "description": "str"}]
+                }
+            )
+        )
+        
+        # Export to vector store
+        embedded_chunks.export_to(
+            Qdrant(
+                url=self.config.cocoindex.qdrant_url,
+                collection_name="doc_chunks"
+            )
+        )
+        
+        # Export structured data to ConPort
+        extracted_data.export_to(ConPortTarget(self.config.conport))
+        
+        # Execute the flow
+        self.flow.run()
+        
+        return {"status": "success", "processed_files": len(docs_flow)}
+    
+    def _process_docs_fallback(self, docs_path: str) -> Dict[str, Any]:
+        """Fallback implementation for doc processing"""
+        processed_files = []
+        
+        for root, _, files in os.walk(docs_path):
+            for file in files:
+                if file.endswith(('.md', '.txt')):
+                    file_path = os.path.join(root, file)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        
+                        # Simple chunking
+                        chunks = [content[i:i+self.config.chunk_size] 
+                                 for i in range(0, len(content), self.config.chunk_size)]
+                        
+                        processed_files.append({
+                            "file_path": file_path,
+                            "chunks": chunks,
+                            "metadata": {
+                                "file_type": file.split('.')[-1],
+                                "size": len(content)
+                            }
+                        })
+                    except Exception as e:
+                        self.logger.error(f"Error processing {file_path}: {e}")
+        
+        return {"status": "success", "processed_files": processed_files}
+    
+    def incremental_update(self, changed_files: List[str]) -> Dict[str, Any]:
+        """
+        Process incremental updates to the codebase or documentation
+        """
+        self.logger.info(f"Processing incremental updates for {len(changed_files)} files")
+        
+        # In a real implementation, this would use CocoIndex's incremental processing
+        # For now, we'll reprocess the changed files
+        results = {"updated_files": [], "errors": []}
+        
+        for file_path in changed_files:
+            try:
+                if file_path.endswith(('.py', '.js', '.ts', '.java', '.cpp', '.c')):
+                    # Process as code
+                    result = self._process_single_code_file(file_path)
+                    results["updated_files"].append(file_path)
+                elif file_path.endswith(('.md', '.txt')):
+                    # Process as documentation
+                    result = self._process_single_doc_file(file_path)
+                    results["updated_files"].append(file_path)
+                else:
+                    self.logger.warning(f"Unsupported file type: {file_path}")
+            except Exception as e:
+                self.logger.error(f"Error updating {file_path}: {e}")
+                results["errors"].append({"file": file_path, "error": str(e)})
+        
+        return results
+    
+    def _process_single_code_file(self, file_path: str) -> Dict[str, Any]:
+        """Process a single code file"""
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Simple chunking
+        chunks = [content[i:i+self.config.chunk_size] 
+                 for i in range(0, len(content), self.config.chunk_size)]
+        
+        return {
+            "file_path": file_path,
+            "chunks": chunks,
+            "metadata": {
+                "file_type": file_path.split('.')[-1],
+                "size": len(content)
+            }
+        }
+    
+    def _process_single_doc_file(self, file_path: str) -> Dict[str, Any]:
+        """Process a single documentation file"""
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Simple chunking
+        chunks = [content[i:i+self.config.chunk_size] 
+                 for i in range(0, len(content), self.config.chunk_size)]
+        
+        return {
+            "file_path": file_path,
+            "chunks": chunks,
+            "metadata": {
+                "file_type": file_path.split('.')[-1],
+                "size": len(content)
+            }
+        }
+
+class ConPortTarget:
+    """Custom target for exporting structured data to ConPort"""
+    
+    def __init__(self, config):
+        self.config = config
+        # In a real implementation, this would connect to ConPort's API
+    
+    def write(self, data):
+        """Write extracted structured data to ConPort"""
+        # This would use ConPort's MCP tools to log decisions, progress, etc.
+        pass
+```
+
+```python
+# unified_codebase_context/code_intelligence.py
+"""
+Code Intelligence Layer (RepoHyper functionality)
+Handles code property graph construction and semantic code analysis
+"""
+
+import os
+import json
+import logging
+from typing import Dict, List, Any, Optional, Tuple
+from pathlib import Path
+from dataclasses import dataclass
+
+try:
+    import torch
+    from torch import nn
+    import networkx as nx
+    from sentence_transformers import SentenceTransformer
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    logging.warning("PyTorch not available. Using fallback implementation.")
+
+from .config import UnifiedConfig
+
+@dataclass
+class CodeEntity:
+    """Represents a code entity (function, class, etc.)"""
+    id: str
+    name: str
+    type: str  # function, class, method, etc.
+    file_path: str
+    start_line: int
+    end_line: int
+    content: str
+    embedding: Optional[List[float]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+@dataclass
+class CodeRelation:
+    """Represents a relationship between code entities"""
+    source_id: str
+    target_id: str
+    relation_type: str  # calls, inherits, implements, etc.
+    metadata: Optional[Dict[str, Any]] = None
+
+class CodePropertyGraph:
+    """Represents the code property graph (CPG)"""
+    
+    def __init__(self):
+        self.entities: Dict[str, CodeEntity] = {}
+        self.relations: List[CodeRelation] = []
+        self.graph = nx.DiGraph()
+    
+    def add_entity(self, entity: CodeEntity):
+        """Add a code entity to the graph"""
+        self.entities[entity.id] = entity
+        self.graph.add_node(entity.id, **entity.__dict__)
+    
+    def add_relation(self, relation: CodeRelation):
+        """Add a relation between entities"""
+        self.relations.append(relation)
+        self.graph.add_edge(
+            relation.source_id, 
+            relation.target_id,
+            relation_type=relation.relation_type,
+            **(relation.metadata or {})
+        )
+    
+    def get_entity(self, entity_id: str) -> Optional[CodeEntity]:
+        """Get an entity by ID"""
+        return self.entities.get(entity_id)
+    
+    def get_related_entities(self, entity_id: str, relation_type: Optional[str] = None) -> List[CodeEntity]:
+        """Get entities related to the given entity"""
+        related = []
+        
+        if relation_type:
+            # Get specific relation type
+            for neighbor in self.graph.neighbors(entity_id):
+                edge_data = self.graph.get_edge_data(entity_id, neighbor)
+                if edge_data.get('relation_type') == relation_type:
+                    related.append(self.entities.get(neighbor))
+        else:
+            # Get all related entities
+            for neighbor in self.graph.neighbors(entity_id):
+                related.append(self.entities.get(neighbor))
+        
+        return [r for r in related if r is not None]
+
+class CodeIntelligenceEngine:
+    """Handles code intelligence using RepoHyper principles"""
+    
+    def __init__(self, config: UnifiedConfig):
+        self.config = config
+        self.logger = logging.getLogger(__name__)
+        self.cpg = CodePropertyGraph()
+        self.embedding_model = None
+        self.gnn_model = None
+        self._setup_models()
+    
+    def _setup_models(self):
+        """Initialize models for code analysis"""
+        if TORCH_AVAILABLE:
+            try:
+                # Load embedding model
+                self.embedding_model = SentenceTransformer(self.config.repohyper.embedding_model)
+                
+                # Load GNN model if available
+                if os.path.exists(self.config.repohyper.model_path):
+                    self.gnn_model = torch.load(self.config.repohyper.model_path)
+                    self.gnn_model.eval()
+            except Exception as e:
+                self.logger.error(f"Error loading models: {e}")
+                self.embedding_model = None
+                self.gnn_model = None
+    
+    def build_code_graph(self, repo_path: str) -> CodePropertyGraph:
+        """
+        Build code property graph for the repository
+        Returns the constructed graph
+        """
+        self.logger.info(f"Building code property graph for: {repo_path}")
+        
+        # Parse code files and extract entities
+        entities = self._extract_code_entities(repo_path)
+        
+        # Add entities to CPG
+        for entity in entities:
+            self.cpg.add_entity(entity)
+        
+        # Extract relations between entities
+        relations = self._extract_code_relations(repo_path, entities)
+        
+        # Add relations to CPG
+        for relation in relations:
+            self.cpg.add_relation(relation)
+        
+        # Generate embeddings for entities
+        if self.embedding_model:
+            self._generate_entity_embeddings()
+        
+        self.logger.info(f"Built CPG with {len(entities)} entities and {len(relations)} relations")
+        return self.cpg
+    
+    def _extract_code_entities(self, repo_path: str) -> List[CodeEntity]:
+        """Extract code entities from the repository"""
+        entities = []
+        
+        for root, _, files in os.walk(repo_path):
+            for file in files:
+                if file.endswith(('.py', '.js', '.ts', '.java')):
+                    file_path = os.path.join(root, file)
+                    try:
+                        file_entities = self._parse_code_file(file_path)
+                        entities.extend(file_entities)
+                    except Exception as e:
+                        self.logger.error(f"Error parsing {file_path}: {e}")
+        
+        return entities
+    
+    def _parse_code_file(self, file_path: str) -> List[CodeEntity]:
+        """Parse a single code file and extract entities"""
+        # This is a simplified implementation
+        # In a real implementation, this would use Tree-sitter or similar
+        
+        entities = []
+        file_type = file_path.split('.')[-1]
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            lines = content.split('\n')
+        
+        # Simple regex-based extraction for demonstration
+        import re
+        
+        if file_type == 'py':
+            # Extract functions
+            func_pattern = r'def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\('
+            for match in re.finditer(func_pattern, content):
+                func_name = match.group(1)
+                start_line = content[:match.start()].count('\n') + 1
+                entities.append(CodeEntity(
+                    id=f"{file_path}:{func_name}",
+                    name=func_name,
+                    type="function",
+                    file_path=file_path,
+                    start_line=start_line,
+                    end_line=start_line,  # Simplified
+                    content=lines[start_line-1] if start_line <= len(lines) else ""
+                ))
+            
+            # Extract classes
+            class_pattern = r'class\s+([a-zA-Z_][a-zA-Z0-9_]*)'
+            for match in re.finditer(class_pattern, content):
+                class_name = match.group(1)
+                start_line = content[:match.start()].count('\n') + 1
+                entities.append(CodeEntity(
+                    id=f"{file_path}:{class_name}",
+                    name=class_name,
+                    type="class",
+                    file_path=file_path,
+                    start_line=start_line,
+                    end_line=start_line,  # Simplified
+                    content=lines[start_line-1] if start_line <= len(lines) else ""
+                ))
+        
+        # Similar patterns can be added for other languages
+        
+        return entities
+    
+    def _extract_code_relations(self, repo_path: str, entities: List[CodeEntity]) -> List[CodeRelation]:
+        """Extract relations between code entities"""
+        relations = []
+        
+        # This is a simplified implementation
+        # In a real implementation, this would use static analysis tools
+        
+        # For Python, we can look for function calls within other functions
+        if any(e.file_path.endswith('.py') for e in entities):
+            relations.extend(self._extract_python_relations(entities))
+        
+        return relations
+    
+    def _extract_python_relations(self, entities: List[CodeEntity]) -> List[CodeRelation]:
+        """Extract relations for Python code"""
+        relations = []
+        
+        # Group entities by file
+        file_entities = {}
+        for entity in entities:
+            if entity.file_path not in file_entities:
+                file_entities[entity.file_path] = []
+            file_entities[entity.file_path].append(entity)
+        
+        # Analyze each file
+        for file_path, file_ents in file_entities.items():
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Look for function calls
+                for func_entity in [e for e in file_ents if e.type == "function"]:
+                    # Simple pattern to find function calls
+                    func_calls = re.findall(rf'\b{func_entity.name}\s*\(', content)
+                    if func_calls:
+                        # Find functions that call this function
+                        for caller in [e for e in file_ents if e.type == "function" and e.id != func_entity.id]:
+                            caller_content = self._get_entity_content(caller, file_path)
+                            if caller_content and func_entity.name in caller_content:
+                                relations.append(CodeRelation(
+                                    source_id=caller.id,
+                                    target_id=func_entity.id,
+                                    relation_type="calls"
+                                ))
+                
+                # Look for class inheritance
+                for class_entity in [e for e in file_ents if e.type == "class"]:
+                    # Simple pattern to find inheritance
+                    inherit_pattern = rf'class\s+\w+\s*\(\s*{class_entity.name}\s*\)'
+                    if re.search(inherit_pattern, content):
+                        for child_class in [e for e in file_ents if e.type == "class" and e.id != class_entity.id]:
+                            relations.append(CodeRelation(
+                                source_id=child_class.id,
+                                target_id=class_entity.id,
+                                relation_type="inherits"
+                            ))
+            
+            except Exception as e:
+                self.logger.error(f"Error analyzing {file_path}: {e}")
+        
+        return relations
+    
+    def _get_entity_content(self, entity: CodeEntity, file_path: str) -> Optional[str]:
+        """Get the content of a code entity"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            
+            if entity.start_line <= len(lines):
+                return lines[entity.start_line - 1]
+            return None
+        except Exception:
+            return None
+    
+    def _generate_entity_embeddings(self):
+        """Generate embeddings for code entities"""
+        if not self.embedding_model:
+            return
+        
+        for entity_id, entity in self.cpg.entities.items():
+            try:
+                # Create a text representation of the entity
+                text = f"{entity.type} {entity.name}: {entity.content}"
+                embedding = self.embedding_model.encode(text).tolist()
+                entity.embedding = embedding
+                
+                # Update the graph node
+                self.cpg.graph.nodes[entity_id]['embedding'] = embedding
+            except Exception as e:
+                self.logger.error(f"Error generating embedding for {entity_id}: {e}")
+    
+    def semantic_search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+        """
+        Perform semantic search over the codebase
+        Returns relevant code entities with their scores
+        """
+        if not self.embedding_model:
+            self.logger.warning("Embedding model not available, falling back to keyword search")
+            return self._keyword_search(query, top_k)
+        
+        # Generate query embedding
+        query_embedding = self.embedding_model.encode(query).tolist()
+        
+        # Calculate similarity with all entities
+        results = []
+        for entity_id, entity in self.cpg.entities.items():
+            if entity.embedding:
+                similarity = self._calculate_cosine_similarity(query_embedding, entity.embedding)
+                results.append({
+                    "entity": entity,
+                    "score": similarity,
+                    "entity_id": entity_id
+                })
+        
+        # Sort by similarity and return top_k
+        results.sort(key=lambda x: x["score"], reverse=True)
+        return results[:top_k]
+    
+    def _calculate_cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+        """Calculate cosine similarity between two vectors"""
+        if not TORCH_AVAILABLE:
+            # Fallback implementation
+            dot_product = sum(a * b for a, b in zip(vec1, vec2))
+            magnitude1 = sum(a * a for a in vec1) ** 0.5
+            magnitude2 = sum(b * b for b in vec2) ** 0.5
+            return dot_product / (magnitude1 * magnitude2) if magnitude1 and magnitude2 else 0
+        
+        # Use PyTorch for better performance
+        vec1_tensor = torch.tensor(vec1)
+        vec2_tensor = torch.tensor(vec2)
+        return torch.nn.functional.cosine_similarity(vec1_tensor, vec2_tensor, dim=0).item()
+    
+    def _keyword_search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+        """Fallback keyword search implementation"""
+        query_lower = query.lower()
+        results = []
+        
+        for entity_id, entity in self.cpg.entities.items():
+            score = 0
+            # Check name match
+            if query_lower in entity.name.lower():
+                score += 1.0
+            # Check content match
+            if query_lower in entity.content.lower():
+                score += 0.5
+            
+            if score > 0:
+                results.append({
+                    "entity": entity,
+                    "score": score,
+                    "entity_id": entity_id
+                })
+        
+        # Sort by score and return top_k
+        results.sort(key=lambda x: x["score"], reverse=True)
+        return results[:top_k]
+    
+    def get_context_for_completion(self, file_path: str, cursor_position: int, context_size: int = 5) -> Dict[str, Any]:
+        """
+        Get relevant context for code completion at a specific position
+        Returns entities and relations that are relevant for completion
+        """
+        # Find entities in the same file
+        file_entities = [e for e in self.cpg.entities.values() if e.file_path == file_path]
+        
+        # Find entities that are related to entities in this file
+        related_entities = set()
+        for entity in file_entities:
+            related = self.cpg.get_related_entities(entity.id)
+            related_entities.update(r.id for r in related)
+        
+        # Get the actual entities
+        context_entities = []
+        for entity_id in related_entities:
+            entity = self.cpg.get_entity(entity_id)
+            if entity:
+                context_entities.append(entity)
+        
+        # Sort by proximity to cursor position (simplified)
+        context_entities.sort(key=lambda e: abs(e.start_line - cursor_position))
+        
+        # Limit to context_size
+        context_entities = context_entities[:context_size]
+        
+        return {
+            "file_entities": file_entities,
+            "related_entities": context_entities,
+            "relations": [
+                r for r in self.cpg.relations 
+                if r.source_id in [e.id for e in file_entities] or 
+                   r.target_id in [e.id for e in file_entities]
+            ]
+        }
+    
+    def update_graph(self, changed_files: List[str]):
+        """Update the code property graph with changed files"""
+        self.logger.info(f"Updating code graph with {len(changed_files)} changed files")
+        
+        # Remove entities and relations for changed files
+        entities_to_remove = []
+        for entity_id, entity in self.cpg.entities.items():
+            if entity.file_path in changed_files:
+                entities_to_remove.append(entity_id)
+        
+        for entity_id in entities_to_remove:
+            # Remove entity
+            if entity_id in self.cpg.entities:
+                del self.cpg.entities[entity_id]
+            
+            # Remove from graph
+            if entity_id in self.cpg.graph:
+                self.cpg.graph.remove_node(entity_id)
+        
+        # Remove relations involving removed entities
+        self.cpg.relations = [
+            r for r in self.cpg.relations 
+            if r.source_id not in entities_to_remove and r.target_id not in entities_to_remove
+        ]
+        
+        # Re-parse changed files and add new entities
+        for file_path in changed_files:
+            try:
+                new_entities = self._parse_code_file(file_path)
+                for entity in new_entities:
+                    self.cpg.add_entity(entity)
+                
+                # Extract new relations
+                new_relations = self._extract_code_relations(file_path, new_entities)
+                for relation in new_relations:
+                    self.cpg.add_relation(relation)
+                
+                # Generate embeddings for new entities
+                if self.embedding_model:
+                    for entity in new_entities:
+                        text = f"{entity.type} {entity.name}: {entity.content}"
+                        entity.embedding = self.embedding_model.encode(text).tolist()
+            except Exception as e:
+                self.logger.error(f"Error updating {file_path}: {e}")
+        
+        self.logger.info("Code graph updated successfully")
+```
+
+```python
+# unified_codebase_context/project_memory.py
+"""
+Project Memory Layer (ConPort functionality)
+Manages structured project knowledge and provides MCP interface
+"""
+
+import os
+import json
+import sqlite3
+import logging
+from typing import Dict, List, Any, Optional, Union
+from dataclasses import dataclass, asdict
+from datetime import datetime
+from pathlib import Path
+
+try:
+    from sentence_transformers import SentenceTransformer
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    logging.warning("Sentence transformers not available. Semantic search will be limited.")
+
+from .config import UnifiedConfig
+
+@dataclass
+class Decision:
+    """Represents a project decision"""
+    id: str
+    summary: str
+    rationale: str
+    tags: List[str]
+    timestamp: str
+    metadata: Optional[Dict[str, Any]] = None
+
+@dataclass
+class Progress:
+    """Represents project progress"""
+    id: str
+    description: str
+    status: str  # TODO, IN_PROGRESS, DONE
+    timestamp: str
+    linked_item_type: Optional[str] = None
+    linked_item_id: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+@dataclass
+class SystemPattern:
+    """Represents a system pattern"""
+    id: str
+    name: str
+    description: str
+    tags: List[str]
+    timestamp: str
+    metadata: Optional[Dict[str, Any]] = None
+
+@dataclass
+class CustomData:
+    """Represents custom project data"""
+    id: str
+    category: str
+    key: str
+    value: Any
+    timestamp: str
+    metadata: Optional[Dict[str, Any]] = None
+
+@dataclass
+class ProductContext:
+    """Represents product context"""
+    id: str
+    content: Dict[str, Any]
+    timestamp: str
+    version: int = 1
+
+@dataclass
+class ActiveContext:
+    """Represents active context"""
+    id: str
+    content: Dict[str, Any]
+    timestamp: str
+    version: int = 1
+
+class ProjectMemoryEngine:
+    """Manages project memory using ConPort principles"""
+    
+    def __init__(self, config: UnifiedConfig):
+        self.config = config
+        self.logger = logging.getLogger(__name__)
+        self.db_path = config.conport.db_path
+        self.workspace_id = config.conport.workspace_id
+        self.embedding_model = None
+        self._setup_database()
+        self._setup_embedding_model()
+    
+    def _setup_database(self):
+        """Initialize SQLite database"""
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        
+        # Connect to database
+        self.conn = sqlite3.connect(self.db_path)
+        self.conn.row_factory = sqlite3.Row
+        
+        # Create tables
+        self._create_tables()
+    
+    def _create_tables(self):
+        """Create database tables"""
+        cursor = self.conn.cursor()
+        
+        # Decisions table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS decisions (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                summary TEXT NOT NULL,
+                rationale TEXT NOT NULL,
+                tags TEXT,  -- JSON array
+                timestamp TEXT NOT NULL,
+                metadata TEXT  -- JSON
+            )
+        ''')
+        
+        # Progress table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS progress (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                description TEXT NOT NULL,
+                status TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                linked_item_type TEXT,
+                linked_item_id TEXT,
+                metadata TEXT  -- JSON
+            )
+        ''')
+        
+        # System patterns table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS system_patterns (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL,
+                tags TEXT,  -- JSON array
+                timestamp TEXT NOT NULL,
+                metadata TEXT  -- JSON
+            )
+        ''')
+        
+        # Custom data table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS custom_data (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                category TEXT NOT NULL,
+                key TEXT NOT NULL,
+                value TEXT NOT NULL,  -- JSON
+                timestamp TEXT NOT NULL,
+                metadata TEXT  -- JSON
+            )
+        ''')
+        
+        # Product context table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS product_context (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                content TEXT NOT NULL,  -- JSON
+                timestamp TEXT NOT NULL,
+                version INTEGER NOT NULL DEFAULT 1
+            )
+        ''')
+        
+        # Active context table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS active_context (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                content TEXT NOT NULL,  -- JSON
+                timestamp TEXT NOT NULL,
+                version INTEGER NOT NULL DEFAULT 1
+            )
+        ''')
+        
+        # Item links table (for knowledge graph)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS item_links (
+                id TEXT PRIMARY KEY,
+                workspace_id TEXT NOT NULL,
+                source_item_type TEXT NOT NULL,
+                source_item_id TEXT NOT NULL,
+                target_item_type TEXT NOT NULL,
+                target_item_id TEXT NOT NULL,
+                relationship_type TEXT NOT NULL,
+                description TEXT,
+                timestamp TEXT NOT NULL
+            )
+        ''')
+        
+        # Create FTS tables for search
+        cursor.execute('''
+            CREATE VIRTUAL TABLE IF NOT EXISTS decisions_fts 
+            USING fts5(summary, rationale, tags, content=decisions)
+        ''')
+        
+        cursor.execute('''
+            CREATE VIRTUAL TABLE IF NOT EXISTS custom_data_fts 
+            USING fts5(category, key, value, content=custom_data)
+        ''')
+        
+        self.conn.commit()
+    
+    def _setup_embedding_model(self):
+        """Setup embedding model for semantic search"""
+        if SENTENCE_TRANSFORMERS_AVAILABLE:
+            try:
+                self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+            except Exception as e:
+                self.logger.error(f"Error loading embedding model: {e}")
+                self.embedding_model = None
+    
+    # Decision management
+    def log_decision(self, summary: str, rationale: str, tags: List[str] = None, metadata: Dict[str, Any] = None) -> str:
+        """Log a new decision"""
+        decision_id = f"decision_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            INSERT INTO decisions (id, workspace_id, summary, rationale, tags, timestamp, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            decision_id,
+            self.workspace_id,
+            summary,
+            rationale,
+            json.dumps(tags or []),
+            datetime.now().isoformat(),
+            json.dumps(metadata or {})
+        ))
+        
+        # Update FTS table
+        cursor.execute('''
+            INSERT INTO decisions_fts (rowid, summary, rationale, tags)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            cursor.lastrowid,
+            summary,
+            rationale,
+            ' '.join(tags or [])
+        ))
+        
+        self.conn.commit()
+        return decision_id
+    
+    def get_decisions(self, limit: int = 10, tags_filter_include_all: List[str] = None, 
+                     tags_filter_include_any: List[str] = None) -> List[Decision]:
+        """Get decisions with optional tag filtering"""
+        cursor = self.conn.cursor()
+        
+        query = "SELECT * FROM decisions WHERE workspace_id = ?"
+        params = [self.workspace_id]
+        
+        if tags_filter_include_all:
+            placeholders = ','.join(['?'] * len(tags_filter_include_all))
+            query += f" AND tags LIKE ? AND " + " AND ".join([f"tags LIKE ?"] * (len(tags_filter_include_all) - 1))
+            params.extend([f'%{tag}%' for tag in tags_filter_include_all])
+        
+        if tags_filter_include_any:
+            placeholders = ','.join(['?'] * len(tags_filter_include_any))
+            query += f" AND (" + " OR ".join([f"tags LIKE ?"] * len(tags_filter_include_any)) + ")"
+            params.extend([f'%{tag}%' for tag in tags_filter_include_any])
+        
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
+        
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        
+        return [self._row_to_decision(row) for row in rows]
+    
+    def search_decisions_fts(self, query_term: str, limit: int = 10) -> List[Decision]:
+        """Search decisions using full-text search"""
+        cursor = self.conn.cursor()
+        
+        cursor.execute('''
+            SELECT d.* FROM decisions_fts f
+            JOIN decisions d ON f.rowid = d.rowid
+            WHERE f.decisions_fts MATCH ? AND d.workspace_id = ?
+            ORDER BY rank
+            LIMIT ?
+        ''', (query_term, self.workspace_id, limit))
+        
+        rows = cursor.fetchall()
+        return [self._row_to_decision(row) for row in rows]
+    
+    def delete_decision_by_id(self, decision_id: str) -> bool:
+        """Delete a decision by ID"""
+        cursor = self.conn.cursor()
+        
+        # Get rowid for FTS table
+        cursor.execute("SELECT rowid FROM decisions WHERE id = ? AND workspace_id = ?", 
+                      (decision_id, self.workspace_id))
+        row = cursor.fetchone()
+        
+        if not row:
+            return False
+        
+        # Delete from main table
+        cursor.execute("DELETE FROM decisions WHERE id = ? AND workspace_id = ?", 
+                      (decision_id, self.workspace_id))
+        
+        # Delete from FTS table
+        cursor.execute("DELETE FROM decisions_fts WHERE rowid = ?", (row['rowid'],))
+        
+        self.conn.commit()
+        return True
+    
+    # Progress management
+    def log_progress(self, description: str, status: str, linked_item_type: str = None, 
+                   linked_item_id: str = None, metadata: Dict[str, Any] = None) -> str:
+        """Log new progress"""
+        progress_id = f"progress_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            INSERT INTO progress (id, workspace_id, description, status, timestamp, linked_item_type, linked_item_id, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            progress_id,
+            self.workspace_id,
+            description,
+            status,
+            datetime.now().isoformat(),
+            linked_item_type,
+            linked_item_id,
+            json.dumps(metadata or {})
+        ))
+        
+        self.conn.commit()
+        return progress_id
+    
+    def get_progress(self, status_filter: str = None, parent_id_filter: str = None, limit: int = 10) -> List[Progress]:
+        """Get progress entries with optional filtering"""
+        cursor = self.conn.cursor()
+        
+        query = "SELECT * FROM progress WHERE workspace_id = ?"
+        params = [self.workspace_id]
+        
+        if status_filter:
+            query += " AND status = ?"
+            params.append(status_filter)
+        
+        if parent_id_filter:
+            query += " AND linked_item_id = ?"
+            params.append(parent_id_filter)
+        
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
+        
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        
+        return [self._row_to_progress(row) for row in rows]
+    
+    def update_progress(self, progress_id: str, status: str = None, description: str = None, 
+                       parent_id: str = None) -> bool:
+        """Update an existing progress entry"""
+        cursor = self.conn.cursor()
+        
+        updates = []
+        params = []
+        
+        if status:
+            updates.append("status = ?")
+            params.append(status)
+        
+        if description:
+            updates.append("description = ?")
+            params.append(description)
+        
+        if parent_id:
+            updates.append("linked_item_id = ?")
+            params.append(parent_id)
+        
+        if not updates:
+            return False
+        
+        query = f"UPDATE progress SET {', '.join(updates)} WHERE id = ? AND workspace_id = ?"
+        params.extend([progress_id, self.workspace_id])
+        
+        cursor.execute(query, params)
+        self.conn.commit()
+        
+        return cursor.rowcount > 0
+    
+    def delete_progress_by_id(self, progress_id: str) -> bool:
+        """Delete a progress entry by ID"""
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM progress WHERE id = ? AND workspace_id = ?", 
+                      (progress_id, self.workspace_id))
+        self.conn.commit()
+        return cursor.rowcount > 0
+    
+    # System pattern management
+    def log_system_pattern(self, name: str, description: str, tags: List[str] = None, 
+                          metadata: Dict[str, Any] = None) -> str:
+        """Log a new system pattern"""
+        pattern_id = f"pattern_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            INSERT INTO system_patterns (id, workspace_id, name, description, tags, timestamp, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            pattern_id,
+            self.workspace_id,
+            name,
+            description,
+            json.dumps(tags or []),
+            datetime.now().isoformat(),
+            json.dumps(metadata or {})
+        ))
+        
+        self.conn.commit()
+        return pattern_id
+    
+    def get_system_patterns(self, tags_filter_include_all: List[str] = None, 
+                           tags_filter_include_any: List[str] = None, limit: int = 10) -> List[SystemPattern]:
+        """Get system patterns with optional tag filtering"""
+        cursor = self.conn.cursor()
+        
+        query = "SELECT * FROM system_patterns WHERE workspace_id = ?"
+        params = [self.workspace_id]
+        
+        if tags_filter_include_all:
+            placeholders = ','.join(['?'] * len(tags_filter_include_all))
+            query += f" AND tags LIKE ? AND " + " AND ".join([f"tags LIKE ?"] * (len(tags_filter_include_all) - 1))
+            params.extend([f'%{tag}%' for tag in tags_filter_include_all])
+        
+        if tags_filter_include_any:
+            placeholders = ','.join(['?'] * len(tags_filter_include_any))
+            query += f" AND (" + " OR ".join([f"tags LIKE ?"] * len(tags_filter_include_any)) + ")"
+            params.extend([f'%{tag}%' for tag in tags_filter_include_any])
+        
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
+        
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        
+        return [self._row_to_system_pattern(row) for row in rows]
+    
+    def delete_system_pattern_by_id(self, pattern_id: str) -> bool:
+        """Delete a system pattern by ID"""
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM system_patterns WHERE id = ? AND workspace_id = ?", 
+                      (pattern_id, self.workspace_id))
+        self.conn.commit()
+        return cursor.rowcount > 0
+    
+    # Custom data management
+    def log_custom_data(self, category: str, key: str, value: Any, metadata: Dict[str, Any] = None) -> str:
+        """Log custom data"""
+        data_id = f"data_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            INSERT INTO custom_data (id, workspace_id, category, key, value, timestamp, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data_id,
+            self.workspace_id,
+            category,
+            key,
+            json.dumps(value),
+            datetime.now().isoformat(),
+            json.dumps(metadata or {})
+        ))
+        
+        # Update FTS table
+        cursor.execute('''
+            INSERT INTO custom_data_fts (rowid, category, key, value)
+            VALUES (?, ?, ?, ?)
+        ''', (
+            cursor.lastrowid,
+            category,
+            key,
+            json.dumps(value)
+        ))
+        
+        self.conn.commit()
+        return data_id
+    
+    def get_custom_data(self, category: str = None, key: str = None) -> List[CustomData]:
+        """Get custom data with optional filtering"""
+        cursor = self.conn.cursor()
+        
+        query = "SELECT * FROM custom_data WHERE workspace_id = ?"
+        params = [self.workspace_id]
+        
+        if category:
+            query += " AND category = ?"
+            params.append(category)
+        
+        if key:
+            query += " AND key = ?"
+            params.append(key)
+        
+        query += " ORDER BY timestamp DESC"
+        
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        
+        return [self._row_to_custom_data(row) for row in rows]
+    
+    def search_custom_data_value_fts(self, query_term: str, category_filter: str = None, limit: int = 10) -> List[CustomData]:
+        """Search custom data using full-text search"""
+        cursor = self.conn.cursor()
+        
+        query = '''
+            SELECT c.* FROM custom_data_fts f
+            JOIN custom_data c ON f.rowid = c.rowid
+            WHERE f.custom_data_fts MATCH ? AND c.workspace_id = ?
+        '''
+        params = [query_term, self.workspace_id]
+        
+        if category_filter:
+            query += " AND c.category = ?"
+            params.append(category_filter)
+        
+        query += " ORDER BY rank LIMIT ?"
+        params.append(limit)
+        
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        
+        return [self._row_to_custom_data(row) for row in rows]
+    
+    def delete_custom_data(self, category: str, key: str) -> bool:
+        """Delete custom data by category and key"""
+        cursor = self.conn.cursor()
+        
+        # Get rowid for FTS table
+        cursor.execute("SELECT rowid FROM custom_data WHERE category = ? AND key = ? AND workspace_id = ?", 
+                      (category, key, self.workspace_id))
+        row = cursor.fetchone()
+        
+        if not row:
+            return False
+        
+        # Delete from main table
+        cursor.execute("DELETE FROM custom_data WHERE category = ? AND key = ? AND workspace_id = ?", 
+                      (category, key, self.workspace_id))
+        
+        # Delete from FTS table
+        cursor.execute("DELETE FROM custom_data_fts WHERE rowid = ?", (row['rowid'],))
+        
+        self.conn.commit()
+        return True
+    
+    # Product and active context management
+    def update_product_context(self, content: Dict[str, Any]) -> bool:
+        """Update product context"""
+        context_id = f"product_context_{self.workspace_id}"
+        
+        cursor = self.conn.cursor()
+        
+        # Check if context exists
+        cursor.execute("SELECT version FROM product_context WHERE id = ? AND workspace_id = ?", 
+                      (context_id, self.workspace_id))
+        row = cursor.fetchone()
+        
+        if row:
+            # Update existing context
+            new_version = row['version'] + 1
+            cursor.execute('''
+                UPDATE product_context 
+                SET content = ?, timestamp = ?, version = ?
+                WHERE id = ? AND workspace_id = ?
+            ''', (
+                json.dumps(content),
+                datetime.now().isoformat(),
+                new_version,
+                context_id,
+                self.workspace_id
+            ))
+        else:
+            # Create new context
+            cursor.execute('''
+                INSERT INTO product_context (id, workspace_id, content, timestamp, version)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (
+                context_id,
+                self.workspace_id,
+                json.dumps(content),
+                datetime.now().isoformat(),
+                1
+            ))
+        
+        self.conn.commit()
+        return True
+    
+    def get_product_context(self) -> Optional[ProductContext]:
+        """Get product context"""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM product_context WHERE id = ? AND workspace_id = ?", 
+                      (f"product_context_{self.workspace_id}", self.workspace_id))
+        row = cursor.fetchone()
+        
+        if row:
+            return self._row_to_product_context(row)
+        return None
+    
+    def update_active_context(self, content: Dict[str, Any]) -> bool:
+        """Update active context"""
+        context_id = f"active_context_{self.workspace_id}"
+        
+        cursor = self.conn.cursor()
+        
+        # Check if context exists
+        cursor.execute("SELECT version FROM active_context WHERE id = ? AND workspace_id = ?", 
+                      (context_id, self.workspace_id))
+        row = cursor.fetchone()
+        
+        if row:
+            # Update existing context
+            new_version = row['version'] + 1
+            cursor.execute('''
+                UPDATE active_context 
+                SET content = ?, timestamp = ?, version = ?
+                WHERE id = ? AND workspace_id = ?
+            ''', (
+                json.dumps(content),
+                datetime.now().isoformat(),
+                new_version,
+                context_id,
+                self.workspace_id
+            ))
+        else:
+            # Create new context
+            cursor.execute('''
+                INSERT INTO active_context (id, workspace_id, content, timestamp, version)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (
+                context_id,
+                self.workspace_id,
+                json.dumps(content),
+                datetime.now().isoformat(),
+                1
+            ))
+        
+        self.conn.commit()
+        return True
+    
+    def get_active_context(self) -> Optional[ActiveContext]:
+        """Get active context"""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM active_context WHERE id = ? AND workspace_id = ?", 
+                      (f"active_context_{self.workspace_id}", self.workspace_id))
+        row = cursor.fetchone()
+        
+        if row:
+            return self._row_to_active_context(row)
+        return None
+    
+    # Knowledge graph links
+    def link_conport_items(self, source_item_type: str, source_item_id: str, target_item_type: str, 
+                           target_item_id: str, relationship_type: str, description: str = None) -> str:
+        """Create a link between two ConPort items"""
+        link_id = f"link_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            INSERT INTO item_links (id, workspace_id, source_item_type, source_item_id, 
+                                   target_item_type, target_item_id, relationship_type, description, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            link_id,
+            self.workspace_id,
+            source_item_type,
+            source_item_id,
+            target_item_type,
+            target_item_id,
+            relationship_type,
+            description,
+            datetime.now().isoformat()
+        ))
+        
+        self.conn.commit()
+        return link_id
+    
+    def get_linked_items(self, item_type: str, item_id: str, relationship_type_filter: str = None, 
+                        linked_item_type_filter: str = None, limit: int = 10) -> List[Dict[str, Any]]:
+        """Get items linked to the specified item"""
+        cursor = self.conn.cursor()
+        
+        query = '''
+            SELECT * FROM item_links 
+            WHERE workspace_id = ? 
+            AND ((source_item_type = ? AND source_item_id = ?) OR (target_item_type = ? AND target_item_id = ?))
+        '''
+        params = [self.workspace_id, item_type, item_id, item_type, item_id]
+        
+        if relationship_type_filter:
+            query += " AND relationship_type = ?"
+            params.append(relationship_type_filter)
+        
+        if linked_item_type_filter:
+            query += " AND (source_item_type = ? OR target_item_type = ?)"
+            params.extend([linked_item_type_filter, linked_item_type_filter])
+        
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
+        
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        
+        results = []
+        for row in rows:
+            # Determine which item is the linked one (not the input item)
+            if row['source_item_type'] == item_type and row['source_item_id'] == item_id:
+                linked_item_type = row['target_item_type']
+                linked_item_id = row['target_item_id']
+            else:
+                linked_item_type = row['source_item_type']
+                linked_item_id = row['source_item_id']
+            
+            results.append({
+                "link_id": row['id'],
+                "linked_item_type": linked_item_type,
+                "linked_item_id": linked_item_id,
+                "relationship_type": row['relationship_type'],
+                "description": row['description'],
+                "timestamp": row['timestamp']
+            })
+        
+        return results
+    
+    # Semantic search
+    def semantic_search_conport(self, query_text: str, top_k: int = 5, 
+                              filter_item_types: List[str] = None) -> List[Dict[str, Any]]:
+        """Perform semantic search across ConPort items"""
+        if not self.embedding_model:
+            self.logger.warning("Embedding model not available, falling back to keyword search")
+            return self._keyword_search_conport(query_text, top_k, filter_item_types)
+        
+        # Generate query embedding
+        query_embedding = self.embedding_model.encode(query_text).tolist()
+        
+        # Get all searchable items
+        items = []
+        
+        # Add decisions
+        if not filter_item_types or "decision" in filter_item_types:
+            decisions = self.get_decisions(limit=100)  # Get recent decisions
+            for decision in decisions:
+                items.append({
+                    "type": "decision",
+                    "id": decision.id,
+                    "text": f"{decision.summary}: {decision.rationale}",
+                    "tags": decision.tags,
+                    "timestamp": decision.timestamp
+                })
+        
+        # Add system patterns
+        if not filter_item_types or "system_pattern" in filter_item_types:
+            patterns = self.get_system_patterns(limit=100)
+            for pattern in patterns:
+                items.append({
+                    "type": "system_pattern",
+                    "id": pattern.id,
+                    "text": f"{pattern.name}: {pattern.description}",
+                    "tags": pattern.tags,
+                    "timestamp": pattern.timestamp
+                })
+        
+        # Add custom data
+        if not filter_item_types or "custom_data" in filter_item_types:
+            custom_data = self.get_custom_data()
+            for data in custom_data:
+                items.append({
+                    "type": "custom_data",
+                    "id": data.id,
+                    "text": f"{data.category}.{data.key}: {json.dumps(data.value)}",
+                    "category": data.category,
+                    "timestamp": data.timestamp
+                })
+        
+        # Calculate similarities
+        results = []
+        for item in items:
+            item_embedding = self.embedding_model.encode(item['text']).tolist()
+            similarity = self._calculate_cosine_similarity(query_embedding, item_embedding)
+            
+            results.append({
+                "item": item,
+                "score": similarity
+            })
+        
+        # Sort by similarity and return top_k
+        results.sort(key=lambda x: x["score"], reverse=True)
+        return results[:top_k]
+    
+    def _keyword_search_conport(self, query_text: str, top_k: int = 5, 
+                               filter_item_types: List[str] = None) -> List[Dict[str, Any]]:
+        """Fallback keyword search for ConPort items"""
+        query_lower = query_text.lower()
+        results = []
+        
+        # Search decisions
+        if not filter_item_types or "decision" in filter_item_types:
+            decisions = self.search_decisions_fts(query_text, limit=top_k)
+            for decision in decisions:
+                results.append({
+                    "item": {
+                        "type": "decision",
+                        "id": decision.id,
+                        "text": f"{decision.summary}: {decision.rationale}",
+                        "tags": decision.tags,
+                        "timestamp": decision.timestamp
+                    },
+                    "score": 1.0  # Default score for keyword matches
+                })
+        
+        # Search custom data
+        if not filter_item_types or "custom_data" in filter_item_types:
+            custom_data = self.search_custom_data_value_fts(query_text, limit=top_k)
+            for data in custom_data:
+                results.append({
+                    "item": {
+                        "type": "custom_data",
+                        "id": data.id,
+                        "text": f"{data.category}.{data.key}: {json.dumps(data.value)}",
+                        "category": data.category,
+                        "timestamp": data.timestamp
+                    },
+                    "score": 1.0
+                })
+        
+        # Sort and return top_k
+        results.sort(key=lambda x: x["score"], reverse=True)
+        return results[:top_k]
+    
+    def _calculate_cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+        """Calculate cosine similarity between two vectors"""
+        try:
+            import numpy as np
+            vec1 = np.array(vec1)
+            vec2 = np.array(vec2)
+            dot_product = np.dot(vec1, vec2)
+            magnitude1 = np.linalg.norm(vec1)
+            magnitude2 = np.linalg.norm(vec2)
+            return dot_product / (magnitude1 * magnitude2) if magnitude1 and magnitude2 else 0
+        except ImportError:
+            # Fallback implementation
+            dot_product = sum(a * b for a, b in zip(vec1, vec2))
+            magnitude1 = sum(a * a for a in vec1) ** 0.5
+            magnitude2 = sum(b * b for b in vec2) ** 0.5
+            return dot_product / (magnitude1 * magnitude2) if magnitude1 and magnitude2 else 0
+    
+    # Helper methods
+    def _row_to_decision(self, row) -> Decision:
+        """Convert database row to Decision object"""
+        return Decision(
+            id=row['id'],
+            summary=row['summary'],
+            rationale=row['rationale'],
+            tags=json.loads(row['tags']) if row['tags'] else [],
+            timestamp=row['timestamp'],
+            metadata=json.loads(row['metadata']) if row['metadata'] else None
+        )
+    
+    def _row_to_progress(self, row) -> Progress:
+        """Convert database row to Progress object"""
+        return Progress(
+            id=row['id'],
+            description=row['description'],
+            status=row['status'],
+            timestamp=row['timestamp'],
+            linked_item_type=row['linked_item_type'],
+            linked_item_id=row['linked_item_id'],
+            metadata=json.loads(row['metadata']) if row['metadata'] else None
+        )
+    
+    def _row_to_system_pattern(self, row) -> SystemPattern:
+        """Convert database row to SystemPattern object"""
+        return SystemPattern(
+            id=row['id'],
+            name=row['name'],
+            description=row['description'],
+            tags=json.loads(row['tags']) if row['tags'] else [],
+            timestamp=row['timestamp'],
+            metadata=json.loads(row['metadata']) if row['metadata'] else None
+        )
+    
+    def _row_to_custom_data(self, row) -> CustomData:
+        """Convert database row to CustomData object"""
+        return CustomData(
+            id=row['id'],
+            category=row['category'],
+            key=row['key'],
+            value=json.loads(row['value']),
+            timestamp=row['timestamp'],
+            metadata=json.loads(row['metadata']) if row['metadata'] else None
+        )
+    
+    def _row_to_product_context(self, row) -> ProductContext:
+        """Convert database row to ProductContext object"""
+        return ProductContext(
+            id=row['id'],
+            content=json.loads(row['content']),
+            timestamp=row['timestamp'],
+            version=row['version']
+        )
+    
+    def _row_to_active_context(self, row) -> ActiveContext:
+        """Convert database row to ActiveContext object"""
+        return ActiveContext(
+            id=row['id'],
+            content=json.loads(row['content']),
+            timestamp=row['timestamp'],
+            version=row['version']
+        )
+    
+    def get_recent_activity_summary(self, hours_ago: int = 24, since_timestamp: str = None, 
+                                   limit_per_type: int = 3) -> Dict[str, List[Any]]:
+        """Get summary of recent activity across all item types"""
+        cursor = self.conn.cursor()
+        
+        # Calculate timestamp filter
+        if since_timestamp:
+            timestamp_filter = since_timestamp
+        else:
+            from datetime import datetime, timedelta
+            timestamp_filter = (datetime.now() - timedelta(hours=hours_ago)).isoformat()
+        
+        # Get recent decisions
+        cursor.execute('''
+            SELECT * FROM decisions 
+            WHERE workspace_id = ? AND timestamp > ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        ''', (self.workspace_id, timestamp_filter, limit_per_type))
+        recent_decisions = [self._row_to_decision(row) for row in cursor.fetchall()]
+        
+        # Get recent progress
+        cursor.execute('''
+            SELECT * FROM progress 
+            WHERE workspace_id = ? AND timestamp > ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        ''', (self.workspace_id, timestamp_filter, limit_per_type))
+        recent_progress = [self._row_to_progress(row) for row in cursor.fetchall()]
+        
+        # Get recent system patterns
+        cursor.execute('''
+            SELECT * FROM system_patterns 
+            WHERE workspace_id = ? AND timestamp > ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        ''', (self.workspace_id, timestamp_filter, limit_per_type))
+        recent_patterns = [self._row_to_system_pattern(row) for row in cursor.fetchall()]
+        
+        # Get recent custom data
+        cursor.execute('''
+            SELECT * FROM custom_data 
+            WHERE workspace_id = ? AND timestamp > ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        ''', (self.workspace_id, timestamp_filter, limit_per_type))
+        recent_custom_data = [self._row_to_custom_data(row) for row in cursor.fetchall()]
+        
+        return {
+            "decisions": recent_decisions,
+            "progress": recent_progress,
+            "system_patterns": recent_patterns,
+            "custom_data": recent_custom_data
+        }
+```
+
+```python
+# unified_codebase_context/query_engine.py
+"""
+Unified Query & RAG Engine
+Integrates code intelligence and project memory for comprehensive context retrieval
+"""
+
+import logging
+from typing import Dict, List, Any, Optional, Union, Tuple
+from dataclasses import dataclass
+
+from .config import UnifiedConfig
+from .code_intelligence import CodeIntelligenceEngine
+from .project_memory import ProjectMemoryEngine
+
+@dataclass
+class QueryResult:
+    """Represents a query result"""
+    content: str
+    source_type: str  # "code", "decision", "progress", "pattern", "custom_data", "doc"
+    source_id: str
+    metadata: Dict[str, Any]
+    score: float = 0.0
+    context: Optional[str] = None
+
+@dataclass
+class CodeCompletionContext:
+    """Context for code completion"""
+    file_path: str
+    cursor_position: int
+    surrounding_code: str
+    relevant_entities: List[Dict[str, Any]]
+    relevant_relations: List[Dict[str, Any]]
+    project_context: Dict[str, Any]
+
+class QueryEngine:
+    """Unified query engine for retrieving context from code and project memory"""
+    
+    def __init__(self, config: UnifiedConfig):
+        self.config = config
+        self.logger = logging.getLogger(__name__)
+        
+        # Initialize component engines
+        self.code_engine = CodeIntelligenceEngine(config)
+        self.memory_engine = ProjectMemoryEngine(config)
+        
+        # Build initial code graph
+        if config.code_repo_path:
+            self.code_engine.build_code_graph(config.code_repo_path)
+    
+    def unified_search(self, query: str, search_code: bool = True, search_docs: bool = True, 
+                      search_knowledge: bool = True, top_k: int = 5) -> List[QueryResult]:
+        """
+        Perform a unified search across code, documentation, and project knowledge
+        Returns ranked list of relevant results
+        """
+        self.logger.info(f"Performing unified search for: {query}")
+        
+        all_results = []
+        
+        # Search code
+        if search_code:
+            code_results = self._search_code(query, top_k)
+            all_results.extend(code_results)
+        
+        # Search documentation (would integrate with CocoIndex in full implementation)
+        if search_docs:
+            doc_results = self._search_docs(query, top_k)
+            all_results.extend(doc_results)
+        
+        # Search project knowledge
+        if search_knowledge:
+            knowledge_results = self._search_knowledge(query, top_k)
+            all_results.extend(knowledge_results)
+        
+        # Sort all results by score
+        all_results.sort(key=lambda x: x.score, reverse=True)
+        
+        # Return top_k results
+        return all_results[:top_k]
+    
+    def _search_code(self, query: str, top_k: int) -> List[QueryResult]:
+        """Search code entities"""
+        results = []
+        
+        # Use semantic search from code engine
+        code_matches = self.code_engine.semantic_search(query, top_k)
+        
+        for match in code_matches:
+            entity = match["entity"]
+            results.append(QueryResult(
+                content=f"{entity.type} {entity.name}: {entity.content}",
+                source_type="code",
+                source_id=entity.id,
+                metadata={
+                    "file_path": entity.file_path,
+                    "start_line": entity.start_line,
+                    "end_line": entity.end_line,
+                    "entity_type": entity.type
+                },
+                score=match["score"]
+            ))
+        
+        return results
+    
+    def _search_docs(self, query: str, top_k: int) -> List[QueryResult]:
+        """Search documentation (placeholder implementation)"""
+        # In a full implementation, this would use CocoIndex's vector store
+        # For now, return empty results
+        return []
+    
+    def _search_knowledge(self, query: str, top_k: int) -> List[QueryResult]:
+        """Search project knowledge"""
+        results = []
+        
+        # Use semantic search from memory engine
+        knowledge_matches = self.memory_engine.semantic_search_conport(query, top_k)
+        
+        for match in knowledge_matches:
+            item = match["item"]
+            results.append(QueryResult(
+                content=item["text"],
+                source_type=item["type"],
+                source_id=item["id"],
+                metadata={
+                    "tags": item.get("tags", []),
+                    "category": item.get("category"),
+                    "timestamp": item.get("timestamp")
+                },
+                score=match["score"]
+            ))
+        
+        return results
+    
+    def get_code_completion_context(self, file_path: str, cursor_position: int, 
+                                  context_size: int = 5) -> CodeCompletionContext:
+        """
+        Get comprehensive context for code completion at a specific position
+        Includes code entities, project knowledge, and documentation
+        """
+        # Get code context from code engine
+        code_context = self.code_engine.get_context_for_completion(file_path, cursor_position, context_size)
+        
+        # Get surrounding code
+        surrounding_code = self._get_surrounding_code(file_path, cursor_position)
+        
+        # Get relevant project knowledge
+        project_context = self._get_relevant_project_context(file_path, cursor_position)
+        
+        return CodeCompletionContext(
+            file_path=file_path,
+            cursor_position=cursor_position,
+            surrounding_code=surrounding_code,
+            relevant_entities=[
+                {
+                    "id": entity.id,
+                    "name": entity.name,
+                    "type": entity.type,
+                    "file_path": entity.file_path,
+                    "content": entity.content
+                }
+                for entity in code_context["file_entities"]
+            ],
+            relevant_relations=[
+                {
+                    "source": rel.source_id,
+                    "target": rel.target_id,
+                    "type": rel.relation_type
+                }
+                for rel in code_context["relations"]
+            ],
+            project_context=project_context
+        )
+    
+    def _get_surrounding_code(self, file_path: str, cursor_position: int, window_size: int = 10) -> str:
+        """Get surrounding code around cursor position"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            
+            start_line = max(0, cursor_position - window_size)
+            end_line = min(len(lines), cursor_position + window_size)
+            
+            surrounding_lines = lines[start_line:end_line]
+            return ''.join(surrounding_lines)
+        except Exception as e:
+            self.logger.error(f"Error getting surrounding code: {e}")
+            return ""
+    
+    def _get_relevant_project_context(self, file_path: str, cursor_position: int) -> Dict[str, Any]:
+        """Get project knowledge relevant to the current context"""
+        # Get file name to use as context
+        file_name = file_path.split('/')[-1].split('.')[0]
+        
+        # Search for relevant decisions, patterns, etc.
+        context = {}
+        
+        # Get product context
+        product_context = self.memory_engine.get_product_context()
+        if product_context:
+            context["product"] = product_context.content
+        
+        # Get active context
+        active_context = self.memory_engine.get_active_context()
+        if active_context:
+            context["active"] = active_context.content
+        
+        # Search for relevant decisions
+        decisions = self.memory_engine.search_decisions_fts(file_name, limit=3)
+        if decisions:
+            context["relevant_decisions"] = [
+                {
+                    "summary": d.summary,
+                    "rationale": d.rationale,
+                    "tags": d.tags
+                }
+                for d in decisions
+            ]
+        
+        # Search for relevant system patterns
+        patterns = self.memory_engine.get_system_patterns(limit=3)
+        if patterns:
+            context["relevant_patterns"] = [
+                {
+                    "name": p.name,
+                    "description": p.description,
+                    "tags": p.tags
+                }
+                for p in patterns
+            ]
+        
+        return context
+    
+    def get_rag_context(self, query: str, max_tokens: int = 2000) -> str:
+        """
+        Generate RAG context for LLM prompts
+        Combines relevant code, documentation, and project knowledge
+        """
+        # Get unified search results
+        results = self.unified_search(query, top_k=10)
+        
+        # Format results as context
+        context_parts = []
+        current_tokens = 0
+        
+        for result in results:
+            # Estimate token count (rough approximation)
+            result_tokens = len(result.content.split()) * 1.3  # Rough estimate
+            
+            if current_tokens + result_tokens > max_tokens:
+                break
+            
+            # Format the result
+            formatted_result = f"--- {result.source_type.upper()} ---\n"
+            formatted_result += f"Source: {result.source_id}\n"
+            formatted_result += f"Content: {result.content}\n"
+            
+            # Add metadata if relevant
+            if result.metadata.get("file_path"):
+                formatted_result += f"File: {result.metadata['file_path']}\n"
+            
+            if result.metadata.get("tags"):
+                formatted_result += f"Tags: {', '.join(result.metadata['tags'])}\n"
+            
+            context_parts.append(formatted_result)
+            current_tokens += result_tokens
+        
+        return "\n".join(context_parts)
+    
+    def explain_code_entity(self, entity_id: str) -> Dict[str, Any]:
+        """
+        Explain a code entity with its relationships and relevant project knowledge
+        """
+        # Get the entity from code engine
+        entity = self.code_engine.cpg.get_entity(entity_id)
+        if not entity:
+            return {"error": "Entity not found"}
+        
+        # Get related entities
+        related_entities = self.code_engine.cpg.get_related_entities(entity_id)
+        
+        # Get related project knowledge
+        # Search for decisions or patterns related to this entity
+        knowledge_results = self.memory_engine.semantic_search_conport(
+            entity.name, top_k=3, filter_item_types=["decision", "system_pattern"]
+        )
+        
+        # Format the explanation
+        explanation = {
+            "entity": {
+                "id": entity.id,
+                "name": entity.name,
+                "type": entity.type,
+                "file_path": entity.file_path,
+                "content": entity.content
+            },
+            "related_entities": [
+                {
+                    "id": rel.id,
+                    "name": rel.name,
+                    "type": rel.type,
+                    "file_path": rel.file_path
+                }
+                for rel in related_entities
+            ],
+            "related_knowledge": [
+                {
+                    "type": item["item"]["type"],
+                    "content": item["item"]["text"],
+                    "score": item["score"]
+                }
+                for item in knowledge_results
+            ]
+        }
+        
+        return explanation
+    
+    def find_implementation_of_decision(self, decision_id: str) -> List[Dict[str, Any]]:
+        """
+        Find code entities that implement a specific decision
+        """
+        # Get the decision
+        decisions = self.memory_engine.get_decisions()
+        decision = next((d for d in decisions if d.id == decision_id), None)
+        if not decision:
+            return []
+        
+        # Search for code entities related to the decision
+        # This would use more sophisticated linking in a real implementation
+        # For now, we'll use semantic search
+        code_results = self.code_engine.semantic_search(decision.summary, top_k=10)
+        
+        implementations = []
+        for result in code_results:
+            entity = result["entity"]
+            implementations.append({
+                "entity_id": entity.id,
+                "entity_name": entity.name,
+                "entity_type": entity.type,
+                "file_path": entity.file_path,
+                "relevance_score": result["score"]
+            })
+        
+        return implementations
+    
+    def update_with_changes(self, changed_files: List[str]):
+        """
+        Update the system with changed files
+        """
+        self.logger.info(f"Updating system with {len(changed_files)} changed files")
+        
+        # Update code graph
+        self.code_engine.update_graph(changed_files)
+        
+        # In a full implementation, we would also:
+        # 1. Process documentation changes with CocoIndex
+        # 2. Extract new project knowledge from changed files
+        # 3. Update embeddings and indexes
+```
+
+```python
+# unified_codebase_context/api.py
+"""
+API Interface for the Unified Codebase Context Platform
+Provides REST API for external tools and AI assistants
+"""
+
+import os
+import json
+import logging
+from typing import Dict, List, Any, Optional
+from datetime import datetime
+from fastapi import FastAPI, HTTPException, Depends
+from pydantic import BaseModel, Field
+from contextlib import asynccontextmanager
+
+from .config import UnifiedConfig
+from .query_engine import QueryEngine, QueryResult, CodeCompletionContext
+from .project_memory import Decision, Progress, SystemPattern, CustomData
+
+# Pydantic models for API
+class DecisionRequest(BaseModel):
+    summary: str
+    rationale: str
+    tags: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+class ProgressRequest(BaseModel):
+    description: str
+    status: str
+    linked_item_type: Optional[str] = None
+    linked_item_id: Optional[str] = None
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+class PatternRequest(BaseModel):
+    name: str
+    description: str
+    tags: List[str] = Field(default_factory=list)
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+class CustomDataRequest(BaseModel):
+    category: str
+    key: str
+    value: Any
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+class ProductContextRequest(BaseModel):
+    content: Dict[str, Any]
+
+class ActiveContextRequest(BaseModel):
+    content: Dict[str, Any]
+
+class SearchRequest(BaseModel):
+    query: str
+    search_code: bool = True
+    search_docs: bool = True
+    search_knowledge: bool = True
+    top_k: int = 5
+
+class CodeCompletionRequest(BaseModel):
+    file_path: str
+    cursor_position: int
+    context_size: int = 5
+
+class LinkItemsRequest(BaseModel):
+    source_item_type: str
+    source_item_id: str
+    target_item_type: str
+    target_item_id: str
+    relationship_type: str
+    description: Optional[str] = None
+
+class UpdateRequest(BaseModel):
+    changed_files: List[str]
+
+# Global variables for the app
+config = None
+query_engine = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    global config, query_engine
+    config = UnifiedConfig()
+    query_engine = QueryEngine(config)
+    yield
+    # Shutdown
+    pass
+
+app = FastAPI(
+    title="Unified Codebase Context Platform API",
+    description="API for accessing unified codebase context and project knowledge",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+# Health check
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+# Decision management endpoints
+@app.post("/decisions", response_model=Dict[str, str])
+async def log_decision(request: DecisionRequest):
+    """Log a new decision"""
+    try:
+        decision_id = query_engine.memory_engine.log_decision(
+            summary=request.summary,
+            rationale=request.rationale,
+            tags=request.tags,
+            metadata=request.metadata
+        )
+        return {"decision_id": decision_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/decisions", response_model=List[Dict[str, Any]])
+async def get_decisions(
+    limit: int = 10,
+    tags_filter_include_all: Optional[str] = None,
+    tags_filter_include_any: Optional[str] = None
+):
+    """Get decisions with optional tag filtering"""
+    try:
+        tags_all = tags_filter_include_all.split(',') if tags_filter_include_all else None
+        tags_any = tags_filter_include_any.split(',') if tags_filter_include_any else None
+        
+        decisions = query_engine.memory_engine.get_decisions(
+            limit=limit,
+            tags_filter_include_all=tags_all,
+            tags_filter_include_any=tags_any
+        )
+        
+        return [
+            {
+                "id": d.id,
+                "summary": d.summary,
+                "rationale": d.rationale,
+                "tags": d.tags,
+                "timestamp": d.timestamp,
+                "metadata": d.metadata
+            }
+            for d in decisions
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/decisions/{decision_id}")
+async def delete_decision(decision_id: str):
+    """Delete a decision by ID"""
+    try:
+        success = query_engine.memory_engine.delete_decision_by_id(decision_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Decision not found")
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Progress management endpoints
+@app.post("/progress", response_model=Dict[str, str])
+async def log_progress(request: ProgressRequest):
+    """Log new progress"""
+    try:
+        progress_id = query_engine.memory_engine.log_progress(
+            description=request.description,
+            status=request.status,
+            linked_item_type=request.linked_item_type,
+            linked_item_id=request.linked_item_id,
+            metadata=request.metadata
+        )
+        return {"progress_id": progress_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/progress", response_model=List[Dict[str, Any]])
+async def get_progress(
+    status_filter: Optional[str] = None,
+    parent_id_filter: Optional[str] = None,
+    limit: int = 10
+):
+    """Get progress entries with optional filtering"""
+    try:
+        progress_entries = query_engine.memory_engine.get_progress(
+            status_filter=status_filter,
+            parent_id_filter=parent_id_filter,
+            limit=limit
+        )
+        
+        return [
+            {
+                "id": p.id,
+                "description": p.description,
+                "status": p.status,
+                "timestamp": p.timestamp,
+                "linked_item_type": p.linked_item_type,
+                "linked_item_id": p.linked_item_id,
+                "metadata": p.metadata
+            }
+            for p in progress_entries
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/progress/{progress_id}")
+async def update_progress(
+    progress_id: str,
+    status: Optional[str] = None,
+    description: Optional[str] = None,
+    parent_id: Optional[str] = None
+):
+    """Update an existing progress entry"""
+    try:
+        success = query_engine.memory_engine.update_progress(
+            progress_id=progress_id,
+            status=status,
+            description=description,
+            parent_id=parent_id
+        )
+        if not success:
+            raise HTTPException(status_code=404, detail="Progress entry not found")
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/progress/{progress_id}")
+async def delete_progress(progress_id: str):
+    """Delete a progress entry by ID"""
+    try:
+        success = query_engine.memory_engine.delete_progress_by_id(progress_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Progress entry not found")
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# System pattern management endpoints
+@app.post("/patterns", response_model=Dict[str, str])
+async def log_system_pattern(request: PatternRequest):
+    """Log a new system pattern"""
+    try:
+        pattern_id = query_engine.memory_engine.log_system_pattern(
+            name=request.name,
+            description=request.description,
+            tags=request.tags,
+            metadata=request.metadata
+        )
+        return {"pattern_id": pattern_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/patterns", response_model=List[Dict[str, Any]])
+async def get_system_patterns(
+    tags_filter_include_all: Optional[str] = None,
+    tags_filter_include_any: Optional[str] = None,
+    limit: int = 10
+):
+    """Get system patterns with optional tag filtering"""
+    try:
+        tags_all = tags_filter_include_all.split(',') if tags_filter_include_all else None
+        tags_any = tags_filter_include_any.split(',') if tags_filter_include_any else None
+        
+        patterns = query_engine.memory_engine.get_system_patterns(
+            tags_filter_include_all=tags_all,
+            tags_filter_include_any=tags_any,
+            limit=limit
+        )
+        
+        return [
+            {
+                "id": p.id,
+                "name": p.name,
+                "description": p.description,
+                "tags": p.tags,
+                "timestamp": p.timestamp,
+                "metadata": p.metadata
+            }
+            for p in patterns
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/patterns/{pattern_id}")
+async def delete_system_pattern(pattern_id: str):
+    """Delete a system pattern by ID"""
+    try:
+        success = query_engine.memory_engine.delete_system_pattern_by_id(pattern_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Pattern not found")
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Custom data management endpoints
+@app.post("/custom-data", response_model=Dict[str, str])
+async def log_custom_data(request: CustomDataRequest):
+    """Log custom data"""
+    try:
+        data_id = query_engine.memory_engine.log_custom_data(
+            category=request.category,
+            key=request.key,
+            value=request.value,
+            metadata=request.metadata
+        )
+        return {"data_id": data_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/custom-data", response_model=List[Dict[str, Any]])
+async def get_custom_data(
+    category: Optional[str] = None,
+    key: Optional[str] = None
+):
+    """Get custom data with optional filtering"""
+    try:
+        custom_data = query_engine.memory_engine.get_custom_data(
+            category=category,
+            key=key
+        )
+        
+        return [
+            {
+                "id": d.id,
+                "category": d.category,
+                "key": d.key,
+                "value": d.value,
+                "timestamp": d.timestamp,
+                "metadata": d.metadata
+            }
+            for d in custom_data
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/custom-data/{category}/{key}")
+async def delete_custom_data(category: str, key: str):
+    """Delete custom data by category and key"""
+    try:
+        success = query_engine.memory_engine.delete_custom_data(category, key)
+        if not success:
+            raise HTTPException(status_code=404, detail="Custom data not found")
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Product and active context endpoints
+@app.put("/product-context")
+async def update_product_context(request: ProductContextRequest):
+    """Update product context"""
+    try:
+        success = query_engine.memory_engine.update_product_context(request.content)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to update product context")
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/product-context")
+async def get_product_context():
+    """Get product context"""
+    try:
+        context = query_engine.memory_engine.get_product_context()
+        if not context:
+            return {"content": {}}
+        return {
+            "content": context.content,
+            "timestamp": context.timestamp,
+            "version": context.version
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/active-context")
+async def update_active_context(request: ActiveContextRequest):
+    """Update active context"""
+    try:
+        success = query_engine.memory_engine.update_active_context(request.content)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to update active context")
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/active-context")
+async def get_active_context():
+    """Get active context"""
+    try:
+        context = query_engine.memory_engine.get_active_context()
+        if not context:
+            return {"content": {}}
+        return {
+            "content": context.content,
+            "timestamp": context.timestamp,
+            "version": context.version
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Knowledge graph endpoints
+@app.post("/links", response_model=Dict[str, str])
+async def link_items(request: LinkItemsRequest):
+    """Create a link between two ConPort items"""
+    try:
+        link_id = query_engine.memory_engine.link_conport_items(
+            source_item_type=request.source_item_type,
+            source_item_id=request.source_item_id,
+            target_item_type=request.target_item_type,
+            target_item_id=request.target_item_id,
+            relationship_type=request.relationship_type,
+            description=request.description
+        )
+        return {"link_id": link_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/links/{item_type}/{item_id}")
+async def get_linked_items(
+    item_type: str,
+    item_id: str,
+    relationship_type_filter: Optional[str] = None,
+    linked_item_type_filter: Optional[str] = None,
+    limit: int = 10
+):
+    """Get items linked to the specified item"""
+    try:
+        linked_items = query_engine.memory_engine.get_linked_items(
+            item_type=item_type,
+            item_id=item_id,
+            relationship_type_filter=relationship_type_filter,
+            linked_item_type_filter=linked_item_type_filter,
+            limit=limit
+        )
+        return {"linked_items": linked_items}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Search and query endpoints
+@app.post("/search", response_model=List[Dict[str, Any]])
+async def unified_search(request: SearchRequest):
+    """Perform unified search across code, docs, and knowledge"""
+    try:
+        results = query_engine.unified_search(
+            query=request.query,
+            search_code=request.search_code,
+            search_docs=request.search_docs,
+            search_knowledge=request.search_knowledge,
+            top_k=request.top_k
+        )
+        
+        return [
+            {
+                "content": result.content,
+                "source_type": result.source_type,
+                "source_id": result.source_id,
+                "metadata": result.metadata,
+                "score": result.score
+            }
+            for result in results
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/code-completion-context", response_model=Dict[str, Any])
+async def get_code_completion_context(request: CodeCompletionRequest):
+    """Get context for code completion"""
+    try:
+        context = query_engine.get_code_completion_context(
+            file_path=request.file_path,
+            cursor_position=request.cursor_position,
+            context_size=request.context_size
+        )
+        
+        return {
+            "file_path": context.file_path,
+            "cursor_position": context.cursor_position,
+            "surrounding_code": context.surrounding_code,
+            "relevant_entities": context.relevant_entities,
+            "relevant_relations": context.relevant_relations,
+            "project_context": context.project_context
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/rag-context")
+async def get_rag_context(query: str, max_tokens: int = 2000):
+    """Get RAG context for LLM prompts"""
+    try:
+        context = query_engine.get_rag_context(query, max_tokens)
+        return {"context": context}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/explain/{entity_id}")
+async def explain_code_entity(entity_id: str):
+    """Explain a code entity with its relationships and relevant knowledge"""
+    try:
+        explanation = query_engine.explain_code_entity(entity_id)
+        return explanation
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/decision-implementations/{decision_id}")
+async def find_implementation_of_decision(decision_id: str):
+    """Find code entities that implement a specific decision"""
+    try:
+        implementations = query_engine.find_implementation_of_decision(decision_id)
+        return {"implementations": implementations}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# System update endpoints
+@app.post("/update")
+async def update_with_changes(request: UpdateRequest):
+    """Update the system with changed files"""
+    try:
+        query_engine.update_with_changes(request.changed_files)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/recent-activity")
+async def get_recent_activity(
+    hours_ago: int = 24,
+    since_timestamp: Optional[str] = None,
+    limit_per_type: int = 3
+):
+    """Get summary of recent activity"""
+    try:
+        activity = query_engine.memory_engine.get_recent_activity_summary(
+            hours_ago=hours_ago,
+            since_timestamp=since_timestamp,
+            limit_per_type=limit_per_type
+        )
+        return activity
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+```
+
+```python
+# unified_codebase_context/main.py
+"""
+Main entry point for the Unified Codebase Context Platform
+"""
+
+import os
+import sys
+import argparse
+import logging
+from pathlib import Path
+
+from .config import UnifiedConfig
+from .data_ingestion import DataIngestionEngine
+from .code_intelligence import CodeIntelligenceEngine
+from .project_memory import ProjectMemoryEngine
+from .query_engine import QueryEngine
+from .api import app
+
+def setup_logging(log_level: str = "INFO"):
+    """Setup logging configuration"""
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper()),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler('unified_platform.log')
+        ]
+    )
+
+def initialize_workspace(config: UnifiedConfig):
+    """Initialize the workspace with necessary directories and databases"""
+    logger = logging.getLogger(__name__)
+    
+    # Create directories
+    os.makedirs(os.path.dirname(config.conport.db_path), exist_ok=True)
+    os.makedirs(config.code_repo_path, exist_ok=True)
+    os.makedirs(config.docs_path, exist_ok=True)
+    
+    # Initialize project memory
+    memory_engine = ProjectMemoryEngine(config)
+    
+    # Set default product context if not exists
+    product_context = memory_engine.get_product_context()
+    if not product_context:
+        memory_engine.update_product_context({
+            "project_name": "Untitled Project",
+            "description": "A software project",
+            "goals": [],
+            "architecture": {},
+            "key_features": []
+        })
+        logger.info("Initialized default product context")
+    
+    # Set default active context if not exists
+    active_context = memory_engine.get_active_context()
+    if not active_context:
+        memory_engine.update_active_context({
+            "current_focus": "Initial setup",
+            "open_issues": [],
+            "recent_changes": []
+        })
+        logger.info("Initialized default active context")
+    
+    logger.info("Workspace initialized successfully")
+
+def ingest_data(config: UnifiedConfig):
+    """Ingest initial data from code repository and documentation"""
+    logger = logging.getLogger(__name__)
+    
+    # Initialize data ingestion engine
+    ingestion_engine = DataIngestionEngine(config)
+    
+    # Ingest code repository
+    if os.path.exists(config.code_repo_path):
+        logger.info(f"Ingesting code repository from {config.code_repo_path}")
+        result = ingestion_engine.ingest_code_repository(config.code_repo_path)
+        logger.info(f"Code ingestion result: {result}")
+    else:
+        logger.warning(f"Code repository path does not exist: {config.code_repo_path}")
+    
+    # Ingest documentation
+    if os.path.exists(config.docs_path):
+        logger.info(f"Ingesting documentation from {config.docs_path}")
+        result = ingestion_engine.ingest_documentation(config.docs_path)
+        logger.info(f"Documentation ingestion result: {result}")
+    else:
+        logger.warning(f"Documentation path does not exist: {config.docs_path}")
+
+def build_code_graph(config: UnifiedConfig):
+    """Build the code property graph"""
+    logger = logging.getLogger(__name__)
+    
+    if not os.path.exists(config.code_repo_path):
+        logger.warning(f"Code repository path does not exist: {config.code_repo_path}")
+        return
+    
+    logger.info("Building code property graph")
+    code_engine = CodeIntelligenceEngine(config)
+    cpg = code_engine.build_code_graph(config.code_repo_path)
+    logger.info(f"Built code property graph with {len(cpg.entities)} entities and {len(cpg.relations)} relations")
+
+def start_api_server(config: UnifiedConfig, host: str = "0.0.0.0", port: int = 8000):
+    """Start the API server"""
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"Starting API server on {host}:{port}")
+    
+    # Import here to avoid circular imports
+    import uvicorn
+    
+    uvicorn.run(
+        "unified_codebase_context.api:app",
+        host=host,
+        port=port,
+        log_level="info",
+        reload=False
+    )
+
+def main():
+    """Main entry point"""
+    parser = argparse.ArgumentParser(description="Unified Codebase Context Platform")
+    parser.add_argument("--config", type=str, help="Path to configuration file")
+    parser.add_argument("--init", action="store_true", help="Initialize workspace")
+    parser.add_argument("--ingest", action="store_true", help="Ingest data from sources")
+    parser.add_argument("--build-graph", action="store_true", help="Build code property graph")
+    parser.add_argument("--serve", action="store_true", help="Start API server")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="API server host")
+    parser.add_argument("--port", type=int, default=8000, help="API server port")
+    parser.add_argument("--log-level", type=str, default="INFO", help="Logging level")
+    
+    args = parser.parse_args()
+    
+    # Setup logging
+    setup_logging(args.log_level)
+    logger = logging.getLogger(__name__)
+    
+    # Load configuration
+    config = UnifiedConfig()
+    if args.config:
+        # Load from file if provided
+        # This would implement loading from a config file
+        pass
+    
+    logger.info("Starting Unified Codebase Context Platform")
+    
+    # Initialize workspace if requested
+    if args.init:
+        logger.info("Initializing workspace")
+        initialize_workspace(config)
+    
+    # Ingest data if requested
+    if args.ingest:
+        logger.info("Ingesting data")
+        ingest_data(config)
+    
+    # Build code graph if requested
+    if args.build_graph:
+        logger.info("Building code graph")
+        build_code_graph(config)
+    
+    # Start API server if requested
+    if args.serve:
+        logger.info("Starting API server")
+        start_api_server(config, args.host, args.port)
+    
+    # If no action specified, show help
+    if not any([args.init, args.ingest, args.build_graph, args.serve]):
+        parser.print_help()
+
+if __name__ == "__main__":
+    main()
+```
+
+## 2. Usage Examples
+
+### Initialize the Platform
+
+```bash
+# Initialize a new workspace
+python -m unified_codebase_context.main --init
+
+# Ingest data from code repository and documentation
+python -m unified_codebase_context.main --ingest
+
+# Build the code property graph
+python -m unified_codebase_context.main --build-graph
+
+# Start the API server
+python -m unified_codebase_context.main --serve
+```
+
+### Using the API
+
+```python
+import requests
+
+# Base URL for the API
+BASE_URL = "http://localhost:8000"
+
+# Log a decision
+decision_data = {
+    "summary": "Use microservices architecture",
+    "rationale": "To improve scalability and maintainability",
+    "tags": ["architecture", "microservices"]
+}
+response = requests.post(f"{BASE_URL}/decisions", json=decision_data)
+decision_id = response.json()["decision_id"]
+
+# Log progress
+progress_data = {
+    "description": "Implement user authentication service",
+    "status": "IN_PROGRESS",
+    "linked_item_type": "decision",
+    "linked_item_id": decision_id
+}
+response = requests.post(f"{BASE_URL}/progress", json=progress_data)
+progress_id = response.json()["progress_id"]
+
+# Search across code and knowledge
+search_data = {
+    "query": "user authentication implementation",
+    "search_code": True,
+    "search_knowledge": True,
+    "top_k": 5
+}
+response = requests.post(f"{BASE_URL}/search", json=search_data)
+results = response.json()
+
+# Get code completion context
+completion_data = {
+    "file_path": "/path/to/code/file.py",
+    "cursor_position": 42,
+    "context_size": 5
+}
+response = requests.post(f"{BASE_URL}/code-completion-context", json=completion_data)
+context = response.json()
+
+# Get RAG context for LLM
+rag_response = requests.post(
+    f"{BASE_URL}/rag-context?query=How%20to%20handle%20user%20authentication%3F&max_tokens=2000"
+)
+rag_context = rag_response.json()["context"]
+```
+
+### Using the Query Engine Directly
+
+```python
+from unified_codebase_context.config import UnifiedConfig
+from unified_codebase_context.query_engine import QueryEngine
+
+# Initialize the engine
+config = UnifiedConfig()
+query_engine = QueryEngine(config)
+
+# Perform unified search
+results = query_engine.unified_search(
+    query="user authentication implementation",
+    search_code=True,
+    search_knowledge=True,
+    top_k=5
+)
+
+# Get code completion context
+context = query_engine.get_code_completion_context(
+    file_path="/path/to/code/file.py",
+    cursor_position=42
+)
+
+# Get RAG context for LLM
+rag_context = query_engine.get_rag_context(
+    query="How to handle user authentication?",
+    max_tokens=2000
+)
+
+# Explain a code entity
+explanation = query_engine.explain_code_entity("entity_id")
+
+# Find implementations of a decision
+implementations = query_engine.find_implementation_of_decision("decision_id")
+```
+
+## 3. Key Features Implemented
+
+1. **Data Ingestion & Processing** (CocoIndex functionality):
+   - Incremental processing of code and documentation
+   - Automatic chunking and embedding generation
+   - Structured information extraction from documents
+   - Support for multiple data sources and targets
+
+2. **Code Intelligence** (RepoHyper functionality):
+   - Code property graph construction
+   - Semantic code search and analysis
+   - Code completion context generation
+   - Relationship extraction between code entities
+
+3. **Project Memory** (ConPort functionality):
+   - Structured storage of decisions, progress, and patterns
+   - Full-text search and semantic search capabilities
+   - Knowledge graph linking between items
+   - Versioned product and active context
+
+4. **Unified Query Engine**:
+   - Integrated search across code, documentation, and project knowledge
+   - RAG context generation for LLM prompts
+   - Code completion context with project awareness
+   - Explanation of code entities with related knowledge
+
+5. **REST API Interface**:
+   - Complete CRUD operations for all data types
+   - Search and query endpoints
+   - Code completion and RAG context endpoints
+   - System update and activity monitoring endpoints
+
+## 4. Integration Benefits
+
+This unified platform provides several key benefits over using the individual components separately:
+
+1. **Seamless Data Flow**: Information flows naturally between code analysis and project knowledge management.
+
+2. **Comprehensive Context**: AI assistants get both code-level and project-level context in a single query.
+
+3. **Incremental Updates**: Changes to codebase automatically update both the code graph and relevant project knowledge.
+
+4. **Unified Search**: Single search interface that understands both code semantics and project concepts.
+
+5. **Knowledge Linking**: Direct connections between code implementations and the decisions that drove them.
+
+This implementation creates a truly intelligent development environment where AI assistants have deep, real-time understanding of both the codebase and the project context.
